@@ -19,7 +19,7 @@ COPY ["Common/Nonuso.Common.csproj", "Common/"]
 COPY ["Messages/Nonuso.Messages.csproj", "Messages/"]
 COPY ["Infrastructure/Infrastructure.Auth/Nonuso.Infrastructure.Auth.csproj", "Infrastructure/Infrastructure.Auth/"]
 COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj", "Infrastructure/Infrastructure.Persistence/"]
-RUN dotnet restore "./Nonuso.Api.csproj"
+RUN dotnet restore "Api/Nonuso.Api.csproj"
 COPY . .
 WORKDIR "/src/Api"
 RUN dotnet build "./Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
