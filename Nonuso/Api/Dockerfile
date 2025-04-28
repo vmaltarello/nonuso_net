@@ -15,7 +15,7 @@ WORKDIR /src
 COPY ["Api/Nonuso.Api.csproj", "Api/"]
 COPY ["Application/Nonuso.Application.csproj", "Application/"]
 COPY ["Domain/Nonuso.Domain.csproj", "Domain/"]
-COPY ["Nonuso.Common/Nonuso.Common.csproj", "Nonuso.Common/"]
+COPY ["Common/Nonuso.Common.csproj", "Common/"]
 COPY ["Messages/Nonuso.Messages.csproj", "Messages/"]
 COPY ["Infrastructure/Infrastructure.Auth/Nonuso.Infrastructure.Auth.csproj", "Infrastructure/Infrastructure.Auth/"]
 COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj", "Infrastructure/Infrastructure.Persistence/"]
