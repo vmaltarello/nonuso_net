@@ -12,10 +12,16 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Nonuso.Api.csproj", "."]
+COPY ["Api/Nonuso.Api.csproj", "Api/"]
+COPY ["Application/Nonuso.Application.csproj", "Application/"]
+COPY ["Domain/Nonuso.Domain.csproj", "Domain/"]
+COPY ["Nonuso.Common/Nonuso.Common.csproj", "Nonuso.Common/"]
+COPY ["Messages/Nonuso.Messages.csproj", "Messages/"]
+COPY ["Infrastructure/Infrastructure.Auth/Nonuso.Infrastructure.Auth.csproj", "Infrastructure/Infrastructure.Auth/"]
+COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj", "Infrastructure/Infrastructure.Persistence/"]
 RUN dotnet restore "./Nonuso.Api.csproj"
 COPY . .
-WORKDIR "/src/."
+WORKDIR "/src/Nonuso.Api"
 RUN dotnet build "./Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
