@@ -21,13 +21,13 @@ COPY ["Infrastructure/Infrastructure.Auth/Nonuso.Infrastructure.Auth.csproj", "I
 COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj", "Infrastructure/Infrastructure.Persistence/"]
 RUN dotnet restore "./Nonuso.Api.csproj"
 COPY . .
-WORKDIR "/src/Nonuso.Api"
+WORKDIR "/src/Api"
 RUN dotnet build "./Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
