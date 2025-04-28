@@ -22,7 +22,7 @@ COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persisten
 RUN dotnet restore "Api/Nonuso.Api.csproj"
 COPY . .
 WORKDIR "/src/Api"
-RUN dotnet build "./Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
