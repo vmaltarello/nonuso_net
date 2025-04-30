@@ -2,16 +2,53 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Nonuso.Domain.Entities;
+using Nonuso.Infrastructure.Persistence.Configurations;
 
 namespace Nonuso.Infrastructure.Persistence
 {
     public class NonusoDbContext(DbContextOptions<NonusoDbContext> options) : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options)
     {
-        public DbSet<Category> Categories { get; set; }
+        public DbSet<Category> Category { get; set; }
+        public DbSet<Favorite> Favorite { get; set; }
+        public DbSet<Product> Product { get; set; }
+        public DbSet<ProductHistory> ProductHistory { get; set; }
+        public DbSet<LastSearch> LastSearch { get; set; }
+        public DbSet<RefreshToken> RefreshToken { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Product>()
+                .HasOne(x => x.Category)
+                .WithMany()
+                .HasForeignKey(x => x.CategoryId);
+
+            modelBuilder.Entity<ProductHistory>()
+              .HasOne(x => x.User)
+              .WithMany()
+              .HasForeignKey(x => x.UserId);
+
+            modelBuilder.Entity<Favorite>()
+             .HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId);
+
+            modelBuilder.Entity<Favorite>()
+            .HasOne(x => x.Product)
+            .WithMany()
+            .HasForeignKey(x => x.ProductId);
+
+            modelBuilder.Entity<LastSearch>()
+             .HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId);
+
+            CategoryConfiguration.PopulateCategoryTable(modelBuilder);
+
+            //modelBuilder.Entity<Favorite>().HasIndex("OwnerId");
+            //modelBuilder.Entity<Product>().HasIndex("OwnerId");
+            //modelBuilder.Entity<ProductHistory>().HasIndex("UserId");
 
             //modelBuilder.ApplyConfiguration(new RoleConfiguration());
 

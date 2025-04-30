@@ -160,17 +160,295 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("DescriptionEN")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description_en");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Category");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("f4d0e95e-21b0-4f85-8894-15a09fc7de6b"),
+                            Description = "Abbigliamento e Accessori",
+                            DescriptionEN = "Clothing and Accessories"
+                        },
+                        new
+                        {
+                            Id = new Guid("7624f3a2-39ca-4986-8033-e7e7f1c29003"),
+                            Description = "Accessori Auto",
+                            DescriptionEN = "Car Accessories"
+                        },
+                        new
+                        {
+                            Id = new Guid("3fb6fcee-daa4-43e0-8cc3-853e64f391b7"),
+                            Description = "Accessori Moto",
+                            DescriptionEN = "Motorcycle Accessories"
+                        },
+                        new
+                        {
+                            Id = new Guid("0be13e80-bdb2-448d-954f-43606c0b4f1c"),
+                            Description = "Altro",
+                            DescriptionEN = "Other"
+                        },
+                        new
+                        {
+                            Id = new Guid("43dff0bb-c45f-4aa1-9e2e-ed561b08cc9b"),
+                            Description = "Arredamento e Casalinghi",
+                            DescriptionEN = "Furniture and Household"
+                        },
+                        new
+                        {
+                            Id = new Guid("88ae11d7-e7e7-4cc0-a12b-0c0363409143"),
+                            Description = "Audio/Video",
+                            DescriptionEN = "Audio/Video"
+                        },
+                        new
+                        {
+                            Id = new Guid("8f6282a5-8d63-49c1-a57e-e66f3c29a768"),
+                            Description = "Auto",
+                            DescriptionEN = "Cars"
+                        },
+                        new
+                        {
+                            Id = new Guid("493fae16-51fc-4ba9-8925-226aa3363e5c"),
+                            Description = "Biciclette",
+                            DescriptionEN = "Bicycles"
+                        },
+                        new
+                        {
+                            Id = new Guid("606b6fac-ae13-4317-b1d6-cd217a9b05a4"),
+                            Description = "Caravan e Camper",
+                            DescriptionEN = "Caravan and Motorhome"
+                        },
+                        new
+                        {
+                            Id = new Guid("8558b4cb-8a92-4244-8339-96b1e1568a77"),
+                            Description = "Collezionismo",
+                            DescriptionEN = "Collectibles"
+                        },
+                        new
+                        {
+                            Id = new Guid("56a1fbec-207a-4904-bdf5-7171cef95dd4"),
+                            Description = "Console e Videogiochi",
+                            DescriptionEN = "Gaming Consoles and Video Games"
+                        },
+                        new
+                        {
+                            Id = new Guid("e780280e-527b-4042-9473-6fef1fdf8ffb"),
+                            Description = "Elettrodomestici",
+                            DescriptionEN = "Home Appliances"
+                        },
+                        new
+                        {
+                            Id = new Guid("29bc1b7d-3195-4fb2-b513-58044e51e020"),
+                            Description = "Elettronica",
+                            DescriptionEN = "Electronics"
+                        },
+                        new
+                        {
+                            Id = new Guid("2489ffe6-6f52-4a61-9028-7997c9c62932"),
+                            Description = "Fotografia",
+                            DescriptionEN = "Photography"
+                        },
+                        new
+                        {
+                            Id = new Guid("177f5cb8-d863-45ac-9f22-9f75c154d4ac"),
+                            Description = "Giardino e Fai da Te",
+                            DescriptionEN = "Garden and DIY"
+                        },
+                        new
+                        {
+                            Id = new Guid("686293d1-0daa-4867-940d-9ac02b07f768"),
+                            Description = "Informatica",
+                            DescriptionEN = "Computing"
+                        },
+                        new
+                        {
+                            Id = new Guid("741ca2e5-d19b-464c-9d77-b5bdc2cc6490"),
+                            Description = "Libri e Riviste",
+                            DescriptionEN = "Books and Magazines"
+                        },
+                        new
+                        {
+                            Id = new Guid("d3e18dd5-2364-4f9b-9ed7-71a1b07be62c"),
+                            Description = "Moto e Scooter",
+                            DescriptionEN = "Motorcycles and Scooters"
+                        },
+                        new
+                        {
+                            Id = new Guid("7ed4459d-c4ff-451b-80ce-6b6cf03f4949"),
+                            Description = "Musica e Film",
+                            DescriptionEN = "Music and Movies"
+                        },
+                        new
+                        {
+                            Id = new Guid("34cfff2e-2cac-4bc3-a9e2-f9dabe555094"),
+                            Description = "Nautica",
+                            DescriptionEN = "Nautical"
+                        },
+                        new
+                        {
+                            Id = new Guid("5b16363f-89da-4df4-bc04-f1a0b7ad9deb"),
+                            Description = "Sport",
+                            DescriptionEN = "Sports"
+                        },
+                        new
+                        {
+                            Id = new Guid("79d3de4d-517c-4840-a83a-0697886d2ae9"),
+                            Description = "Strumenti Musicali",
+                            DescriptionEN = "Musical Instruments"
+                        },
+                        new
+                        {
+                            Id = new Guid("a49f84c7-cbe3-4ad3-a8a3-014dd7ac8603"),
+                            Description = "Telefonia",
+                            DescriptionEN = "Mobile Phones"
+                        },
+                        new
+                        {
+                            Id = new Guid("2e55268e-f134-42fe-922c-19335025f372"),
+                            Description = "Tutto motori",
+                            DescriptionEN = "All Motors"
+                        },
+                        new
+                        {
+                            Id = new Guid("bb1a3695-6580-409c-ac18-4a943604e7f8"),
+                            Description = "Tutto per i bambini",
+                            DescriptionEN = "Kids Items"
+                        },
+                        new
+                        {
+                            Id = new Guid("ec7b4635-dbe2-4ebb-8405-1935602fc31f"),
+                            Description = "Veicoli",
+                            DescriptionEN = "Vehicles"
+                        },
+                        new
+                        {
+                            Id = new Guid("8ec503c0-2e04-43e7-b940-3ffc99bc855a"),
+                            Description = "Accessori per animali",
+                            DescriptionEN = "Pet Supplies"
+                        });
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Favorite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Favorite");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<short>("ImagesNum")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("ImagesUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("LocationName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ViewCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Product");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TotalDonatedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalExchangedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalProductCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProductHistory");
                 });
 
             modelBuilder.Entity("Nonuso.Domain.Entities.User", b =>
@@ -297,6 +575,55 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Favorite", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Product", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductHistory", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

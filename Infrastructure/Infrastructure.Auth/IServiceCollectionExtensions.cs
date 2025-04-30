@@ -20,7 +20,8 @@ namespace Nonuso.Infrastructure.Auth
                 opt.Password.RequiredLength = 8;
                 opt.Password.RequireDigit = true;
                 opt.Password.RequireUppercase = true;
-
+                opt.Password.RequireNonAlphanumeric = false;
+                
                 opt.User.RequireUniqueEmail = true;
                 opt.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
             })

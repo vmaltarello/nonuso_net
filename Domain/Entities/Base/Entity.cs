@@ -1,8 +1,11 @@
-﻿namespace Nonuso.Domain.Entities.Base
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Nonuso.Domain.Entities.Base
 {
     public abstract class Entity
     {
-        public Guid Id { get; protected set; }
+        [Key]
+        public Guid Id { get; set; }
 
         public void SetDefaults()
         {

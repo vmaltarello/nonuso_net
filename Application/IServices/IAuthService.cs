@@ -6,6 +6,8 @@ namespace Nonuso.Application.IServices
     {
         Task SignUpAsync(UserSignUpParamModel model);
         Task<UserResultModel?> SignInAsync(UserSignInParamModel model);
-        Task RefreshTokenAsync(string refreshToken);
+        Task SignOutAsync(Guid id);
+        Task<UserResultModel> RefreshTokenAsync(Guid userId, string refreshToken);
+        Task<bool> UserNameIsUniqueAsync(string userName);
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Nonuso.Application.IServices;
+using Nonuso.Application.Services;
 
 namespace Nonuso.Application
 {
@@ -6,15 +8,11 @@ namespace Nonuso.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            //var mapperConfig = new MapperConfiguration(mc =>
-            //{
-            //    mc.AddProfile(new Mapping.Mapper());
-            //});
 
-            //IMapper mapper = mapperConfig.CreateMapper();
-            //services.AddSingleton(mapper);
-
-            //services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IFavoriteService, FavoriteService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<ILastSearchService, LastSearchService>();
 
             return services;
         }

@@ -5,8 +5,8 @@ namespace Nonuso.Messages.Api
     public class UserModel : IModel
     {
         public Guid Id { get; set; }
-        public string Email { get; set; } = null!;
-        public string UserName { get; set; } = null!;
+        public required string Email { get; set; }
+        public required string UserName { get; set; }
 
     }
 
@@ -25,7 +25,8 @@ namespace Nonuso.Messages.Api
 
     public class UserResultModel : UserModel
     {
-        public string Token { get; set; } = null!;
-
+        public required string AccessToken { get; set; }
+        public required string RefreshToken { get; set; }
+        public int RefreshTokenExpiresIn { get; set; }
     }
 }
