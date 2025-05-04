@@ -28,6 +28,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docker-compose.override.yml = docker-compose.override.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Storage", "Infrastructure.Storage", "{6846FE66-236D-464C-861E-29C588C4C2D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Infrastructure.Storage", "Infrastructure\Infrastructure.Storage\Nonuso.Infrastructure.Storage.csproj", "{CFFA1E19-A32F-4CA2-927E-D3777F9E316F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +66,10 @@ Global
 		{BAAB72DB-E3F4-49FB-8C2A-358A37ABA1A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAAB72DB-E3F4-49FB-8C2A-358A37ABA1A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAAB72DB-E3F4-49FB-8C2A-358A37ABA1A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFFA1E19-A32F-4CA2-927E-D3777F9E316F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFFA1E19-A32F-4CA2-927E-D3777F9E316F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFFA1E19-A32F-4CA2-927E-D3777F9E316F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFFA1E19-A32F-4CA2-927E-D3777F9E316F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -71,5 +79,7 @@ Global
 		{4DFB8314-D9A9-4B55-A554-4C2DFE086F55} = {85B7E1FB-F7CC-4058-BBF2-79444EF227B2}
 		{9CF16DE2-B0F8-45F3-951C-DFC81647291F} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
 		{165D6CC9-3234-438B-B961-12905E8A1AC7} = {9CF16DE2-B0F8-45F3-951C-DFC81647291F}
+		{6846FE66-236D-464C-861E-29C588C4C2D6} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
+		{CFFA1E19-A32F-4CA2-927E-D3777F9E316F} = {6846FE66-236D-464C-861E-29C588C4C2D6}
 	EndGlobalSection
 EndGlobal

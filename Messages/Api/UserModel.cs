@@ -10,6 +10,12 @@ namespace Nonuso.Messages.Api
 
     }
 
+    public class  UserChangePasswordModel 
+    {
+        public Guid Id { get; set; }
+        public required string Password { get; set; }
+    }
+
     public class  UserSignInParamModel
     {
         public required string UserName { get; set; }

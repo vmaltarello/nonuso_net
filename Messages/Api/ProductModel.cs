@@ -28,8 +28,14 @@ namespace Nonuso.Messages.Api
 
     public class ProductResultModel : ProductModel 
     {
-        public string[] ImagesURL { get; set; } = [];
+        public string ImagesURL { get; set; } = string.Empty;
         public required DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class ProductDetailResultModel : ProductModel 
+    {
+        public bool IsMyFavorite { get; set; }
+        public int FavoriteCount { get; set; }
     }
 }

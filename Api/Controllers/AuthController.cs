@@ -14,6 +14,12 @@ namespace Nonuso.Api.Controllers
         private readonly CurrentUser _currentUser = currentUser;
 
         [HttpPost]
+        public async Task<IActionResult> AuthWithGoogle(AuthGoogleParamModel model)
+        {
+            return Ok(await _authService.AuthWithGoogleAsync(model.IdToken));
+        }
+
+        [HttpPost]
         public async Task<IActionResult> SignUp(UserSignUpParamModel model)
         {
             await _authService.SignUpAsync(model);

@@ -18,6 +18,8 @@ COPY ["Common/Nonuso.Common.csproj", "Common/"]
 COPY ["Messages/Nonuso.Messages.csproj", "Messages/"]
 COPY ["Infrastructure/Infrastructure.Auth/Nonuso.Infrastructure.Auth.csproj", "Infrastructure/Infrastructure.Auth/"]
 COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj", "Infrastructure/Infrastructure.Persistence/"]
+COPY ["Infrastructure/Infrastructure.Storage/Nonuso.Infrastructure.Storage.csproj", "Infrastructure/Infrastructure.Storage/"]
+
 RUN dotnet restore "Api/Nonuso.Api.csproj"
 COPY . .
 WORKDIR "/src/Api"

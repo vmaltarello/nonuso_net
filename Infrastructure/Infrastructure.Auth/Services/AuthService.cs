@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 using Nonuso.Application.IServices;
 using Nonuso.Common;
 using Nonuso.Domain.Entities;
@@ -16,11 +15,8 @@ using System.Text;
 
 namespace Nonuso.Infrastructure.Auth.Services
 {
-    public class AuthService(
-        UserManager<User> userManager, 
-        SignInManager<User> signInManager,
-        IAuthRepository authRepository,
-        IConfiguration configuration) : IAuthService
+    public class AuthService(UserManager<User> userManager, SignInManager<User> signInManager, 
+        IAuthRepository authRepository, IConfiguration configuration) : IAuthService
     {
         readonly UserManager<User> _userManager = userManager;
         readonly SignInManager<User> _signInManager = signInManager;
@@ -28,13 +24,50 @@ namespace Nonuso.Infrastructure.Auth.Services
 
         readonly IConfiguration _configuration = configuration;
 
+        public async Task<UserResultModel> AuthWithGoogleAsync(string idToken)
+        {
+            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
+
+            var email = payload.Email;
+            var googleId = payload.Subject;
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                var subEmailPart = email.Split('@')[0];
+                user = new User
+                {
+                    UserName = subEmailPart[..Math.Min(20, subEmailPart.Length)],
+                    Email = email,
+                    EmailConfirmed = true,
+                    LastSignInAt = DateTime.UtcNow
+                };
+
+                await _userManager.CreateAsync(user);
+
+                var createdUser = await _userManager.FindByEmailAsync(email);
+
+                var loginInfo = new UserLoginInfo("Google", googleId, "Google");
+                var loginResult = await _userManager.AddLoginAsync(user, loginInfo);
+
+                return await BuildTokens(createdUser!);
+            }
+
+            var existingLogins = await _userManager.GetLoginsAsync(user);
+
+            if (!existingLogins.Any(x => x.LoginProvider == "Google" && x.ProviderKey == googleId))
+            {
+                var loginInfo = new UserLoginInfo("Google", googleId, "Google");
+                var loginResult = await _userManager.AddLoginAsync(user, loginInfo);
+            }
+
+            return await BuildTokens(user);
+        }
+
         public async Task SignUpAsync(UserSignUpParamModel model)
         {
             var entity = model.To<User>();
-
-            entity.Id = Guid.NewGuid();
-            entity.CreatedAt = DateTime.UtcNow;
-
             await _userManager.CreateAsync(entity, model.Password);
         }
 
@@ -48,27 +81,12 @@ namespace Nonuso.Infrastructure.Auth.Services
 
                 if (user != null)
                 {
-                    var token = await GenerateJwtTokenAsync(user);
-                    var refreshToken = GenerateRefreshToken();
+                    if (!user.EmailConfirmed) return null;
 
-                    var refreshTokenEntity = new RefreshToken() 
-                    {
-                        Token = refreshToken,
-                        ExpirationDate = DateTime.UtcNow.AddDays(30),
-                        UserId = user.Id,
-                    };
+                    user.LastSignInAt = DateTime.UtcNow;
+                    await _userManager.UpdateAsync(user);
 
-                    await _authRepository.CreateRefreshTokenAsync(refreshTokenEntity);
-
-                    return new UserResultModel()
-                    {
-                        Id = user.Id,
-                        Email = user.Email!,
-                        UserName = user.UserName!,
-                        AccessToken = token,
-                        RefreshToken = refreshToken,
-                        RefreshTokenExpiresIn = 2592000 // 30 days
-                    };
+                    return await BuildTokens(user);                   
                 }
             }
 
@@ -85,6 +103,25 @@ namespace Nonuso.Infrastructure.Auth.Services
             await _authRepository.RevokeRefreshTokenAsync(refreshToken);
         }
 
+        public async Task ChangePasswordAsync(UserChangePasswordModel model)
+        {
+            var user = await _userManager.FindByIdAsync(model.Id.ToString())
+                ?? throw new EntityNotFoundException(nameof(User), model.Id);
+
+            await _userManager.ChangePasswordAsync(user, user.PasswordHash!, model.Password);
+        }
+
+
+        public async Task ChangeUserNameAsync(Guid userId, string userName)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString())
+                ?? throw new EntityNotFoundException(nameof(User), userId);
+
+            user.UserName = userName;
+
+            await _userManager.UpdateAsync(user);
+        }
+
         public async Task<UserResultModel> RefreshTokenAsync(Guid userId, string refreshToken)
         {
             var storedToken = await _authRepository.GetRefreshTokenByUserIdAsync(userId, refreshToken);
@@ -92,30 +129,9 @@ namespace Nonuso.Infrastructure.Auth.Services
             if (storedToken == null || storedToken.ExpirationDate < DateTime.UtcNow)
                 throw new UnauthorizedAccessException();
 
-            var newAccessToken = await GenerateJwtTokenAsync(storedToken.User!);
-            var newRefreshToken = GenerateRefreshToken();
-
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 
-            var newTokenEntity = new RefreshToken
-            {
-                UserId = storedToken.UserId,
-                Token = newRefreshToken,
-                CreatedAt = DateTime.UtcNow,
-                ExpirationDate = DateTime.UtcNow.AddDays(30)
-            };
-
-            await _authRepository.CreateRefreshTokenAsync(newTokenEntity);
-
-            return new UserResultModel()
-            {
-                Id = storedToken.User!.Id,
-                Email = storedToken.User!.Email!,
-                UserName = storedToken.User!.UserName!,
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken,
-                RefreshTokenExpiresIn = 2592000 // 30 days
-            };
+            return await BuildTokens(storedToken.User!);
         }
 
         public async Task<bool> UserNameIsUniqueAsync(string userName)
@@ -124,6 +140,31 @@ namespace Nonuso.Infrastructure.Auth.Services
         }
         
         #region PRIVATE
+
+        private async Task<UserResultModel> BuildTokens(User user)
+        {
+            var token = await GenerateJwtTokenAsync(user);
+            var refreshToken = GenerateRefreshToken();
+
+            var refreshTokenEntity = new RefreshToken()
+            {
+                Token = refreshToken,
+                ExpirationDate = DateTime.UtcNow.AddDays(30),
+                UserId = user.Id,
+            };
+
+            await _authRepository.CreateRefreshTokenAsync(refreshTokenEntity);
+
+            return new UserResultModel()
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                UserName = user.UserName!,
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                RefreshTokenExpiresIn = 2592000 // 30 days
+            };
+        }
 
         private async Task<string> GenerateJwtTokenAsync(User user)
         {
