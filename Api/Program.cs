@@ -4,6 +4,7 @@ using Nonuso.Api.Extensions;
 using Nonuso.Application;
 using Nonuso.Domain;
 using Nonuso.Infrastructure.Auth;
+using Nonuso.Infrastructure.Notification;
 using Nonuso.Infrastructure.Persistence;
 using Nonuso.Infrastructure.Storage;
 
@@ -21,6 +22,7 @@ builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddInfrastructurePersistence(builder.Configuration);
 builder.Services.AddInfrastructureAuth(builder.Configuration);
 builder.Services.AddInfrastructureS3Storage(builder.Configuration);
+builder.Services.AddInfrastructureNotification();
 builder.Services.AddApplication();
 builder.Services.AddValidators();
 

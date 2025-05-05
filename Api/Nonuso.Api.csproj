@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Nonuso.Application.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.Auth\Nonuso.Infrastructure.Auth.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.Email\Nonuso.Infrastructure.Notification.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.Persistence\Nonuso.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.Storage\Nonuso.Infrastructure.Storage.csproj" />
     <ProjectReference Include="..\Messages\Nonuso.Messages.csproj" />

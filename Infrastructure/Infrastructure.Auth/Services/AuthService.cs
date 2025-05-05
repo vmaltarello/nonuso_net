@@ -1,4 +1,5 @@
-﻿using Google.Apis.Auth;
+﻿using FluentValidation;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -7,21 +8,29 @@ using Nonuso.Common;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
+using Nonuso.Domain.Validators.Factory;
 using Nonuso.Messages.Api;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Nonuso.Infrastructure.Auth.Services
 {
-    public class AuthService(UserManager<User> userManager, SignInManager<User> signInManager, 
-        IAuthRepository authRepository, IConfiguration configuration) : IAuthService
+    public class AuthService(
+        IDomainValidatorFactory validatorFactory,
+        UserManager<User> userManager, 
+        SignInManager<User> signInManager, 
+        IAuthRepository authRepository,
+        IOneSignalService oneSignalService,
+        IConfiguration configuration) : IAuthService
     {
+        readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly UserManager<User> _userManager = userManager;
         readonly SignInManager<User> _signInManager = signInManager;
         readonly IAuthRepository _authRepository = authRepository;
-
+        readonly IOneSignalService _oneSignalService = oneSignalService;
         readonly IConfiguration _configuration = configuration;
 
         public async Task<UserResultModel> AuthWithGoogleAsync(string idToken)
@@ -68,7 +77,22 @@ namespace Nonuso.Infrastructure.Auth.Services
         public async Task SignUpAsync(UserSignUpParamModel model)
         {
             var entity = model.To<User>();
-            await _userManager.CreateAsync(entity, model.Password);
+
+            _validatorFactory.GetValidator<User>().ValidateAndThrow(entity);
+
+            var result = await _userManager.CreateAsync(entity, model.Password);
+
+            if(result.Succeeded)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user != null)
+                {
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var encodedToken = WebUtility.UrlEncode(token);
+                    var tokenConfirmEmail = $"http://localhost:5227/api/auth/confirmEmail?token={encodedToken}&email={model.Email}";
+                    await _oneSignalService.SendConfirmEmailAsync(user, tokenConfirmEmail);
+                }
+            }
         }
 
         public async Task<UserResultModel?> SignInAsync(UserSignInParamModel model)
@@ -111,7 +135,6 @@ namespace Nonuso.Infrastructure.Auth.Services
             await _userManager.ChangePasswordAsync(user, user.PasswordHash!, model.Password);
         }
 
-
         public async Task ChangeUserNameAsync(Guid userId, string userName)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString())
@@ -133,12 +156,20 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             return await BuildTokens(storedToken.User!);
         }
-
+   
         public async Task<bool> UserNameIsUniqueAsync(string userName)
         {
             return await _userManager.FindByNameAsync(userName.Trim()) == null;
         }
-        
+
+        public async Task ConfirmEmailAsync(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email)
+                ?? throw new EntityNotFoundException(nameof(User), email);
+
+            await _userManager.ConfirmEmailAsync(user, token);
+        }
+
         #region PRIVATE
 
         private async Task<UserResultModel> BuildTokens(User user)

@@ -50,5 +50,12 @@ namespace Nonuso.Api.Controllers
         {
             return Ok(await _authService.UserNameIsUniqueAsync(userName));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string token, string email)
+        {
+            await _authService.ConfirmEmailAsync(token, email);
+            return Ok();
+        }
     }
 }

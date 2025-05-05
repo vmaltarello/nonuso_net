@@ -18,7 +18,7 @@ namespace Nonuso.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            
             modelBuilder.Entity<Product>()
                 .HasOne(x => x.Category)
                 .WithMany()

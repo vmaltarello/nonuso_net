@@ -1,4 +1,5 @@
-﻿using Nonuso.Messages.Api;
+﻿using Nonuso.Domain.Entities;
+using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.IServices
 {
@@ -12,5 +13,6 @@ namespace Nonuso.Application.IServices
         Task ChangeUserNameAsync(Guid userId, string userName);
         Task<UserResultModel> RefreshTokenAsync(Guid userId, string refreshToken);
         Task<bool> UserNameIsUniqueAsync(string userName);
+        Task ConfirmEmailAsync(string token, string email);
     }
 }
