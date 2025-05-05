@@ -209,9 +209,9 @@ namespace Nonuso.Infrastructure.Auth.Services
         {
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),                
-                new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-                new(JwtRegisteredClaimNames.Nickname, user.UserName ?? string.Empty),
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email ?? string.Empty),
+                new(ClaimTypes.Name, user.UserName ?? string.Empty),
                 // this guarantees the token is unique
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Nonuso.Api.Common;
 using Nonuso.Api.Controllers.Base;
 using Nonuso.Application.IServices;
@@ -13,6 +14,15 @@ namespace Nonuso.Api.Controllers
         private readonly IAuthService _authService = authService;
         private readonly CurrentUser _currentUser = currentUser;
 
+        [HttpGet]
+        [Authorize]
+        public IActionResult DebugClaims()
+        {
+            var claims = User.Claims.Select(c => new { c.Type, c.Value });
+            return Ok(claims);
+        }
+
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetCurrentUser()
         {

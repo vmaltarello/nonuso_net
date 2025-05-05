@@ -13,6 +13,7 @@ namespace Nonuso.Messages.Api
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public required string LocationName { get; set; }
+        public string ImagesURL { get; set; }
       
     }
 
@@ -28,7 +29,7 @@ namespace Nonuso.Messages.Api
 
     public class ProductResultModel : ProductModel 
     {
-        public string ImagesURL { get; set; } = string.Empty;
+        public string[] ImagesURLs { get { return ImagesURL.Split(',') ?? []; } }
         public required DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

@@ -5,6 +5,11 @@ namespace Nonuso.Api.Controllers.Base
 {
     public abstract class ApiControllerBase : ControllerBase
     {
+        protected new IActionResult Ok()
+        {
+            return base.Ok(ApiResponse<object>.Ok(null));
+        }
+
         protected IActionResult Ok<T>(T? result = default)
         {
             return base.Ok(ApiResponse<T>.Ok(result));
