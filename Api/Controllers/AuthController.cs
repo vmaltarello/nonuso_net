@@ -13,6 +13,12 @@ namespace Nonuso.Api.Controllers
         private readonly IAuthService _authService = authService;
         private readonly CurrentUser _currentUser = currentUser;
 
+        [HttpGet]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            return Ok(await _authService.GetCurrentUserAsync(_currentUser.Id));
+        }
+
         [HttpPost]
         public async Task<IActionResult> AuthWithGoogle(AuthGoogleParamModel model)
         {

@@ -33,6 +33,14 @@ namespace Nonuso.Infrastructure.Auth.Services
         readonly IOneSignalService _oneSignalService = oneSignalService;
         readonly IConfiguration _configuration = configuration;
 
+        public async Task<UserResultModel> GetCurrentUserAsync(Guid id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString())
+               ?? throw new EntityNotFoundException(nameof(User), id);
+
+            return user.To<UserResultModel>();
+        }
+
         public async Task<UserResultModel> AuthWithGoogleAsync(string idToken)
         {
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);

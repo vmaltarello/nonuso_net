@@ -1,10 +1,10 @@
-﻿using Nonuso.Domain.Entities;
-using Nonuso.Messages.Api;
+﻿using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.IServices
 {
     public interface IAuthService
     {
+        Task<UserResultModel> GetCurrentUserAsync(Guid id);
         Task<UserResultModel> AuthWithGoogleAsync(string idToken);
         Task SignUpAsync(UserSignUpParamModel model);
         Task<UserResultModel?> SignInAsync(UserSignInParamModel model);
