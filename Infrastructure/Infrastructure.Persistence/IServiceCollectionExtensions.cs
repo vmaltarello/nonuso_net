@@ -12,7 +12,7 @@ namespace Nonuso.Infrastructure.Persistence
         {
             services.AddDbContext<NonusoDbContext>(options =>
                 options
-                    .UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+                    .UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions => npgsqlOptions.UseNetTopologySuite())
                     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking),
                 ServiceLifetime.Scoped);
 

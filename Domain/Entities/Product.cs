@@ -1,46 +1,52 @@
-﻿using Nonuso.Domain.Entities.Base;
+﻿using NetTopologySuite.Geometries;
+using Nonuso.Domain.Entities.Base;
+using NpgsqlTypes;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Nonuso.Domain.Entities
 {
     public class Product : Entity
     {
+
         [Required]
         public Guid UserId { get; set; }
 
         [Required]
-        [MinLength(5)]
-        [MaxLength(255)]
-        public required string Title { get; set; }
+        [StringLength(255)]
+        public string Title { get; set; } = string.Empty;
 
         [Required]
-        [MinLength(5)]
-        [MaxLength(500)]
-        public required string Description { get; set; }
+        [StringLength(500)]
+        public string Description { get; set; } = string.Empty;
+
+        public string ImagesUrl { get; set; } = string.Empty;
 
         [Required]
         public Guid CategoryId { get; set; }
 
-        public string? ImagesUrl { get; set; }
+        [Required]
+        public Point Location { get; set; } = null!;
 
         [Required]
-        public double Latitude { get; set; }
+        [StringLength(255)]
+        public string LocationName { get; set; } = string.Empty;
 
-        [Required]
-        public double Longitude { get; set; }
+        public NpgsqlTsVector SearchVector { get; set; } = null!;
 
-        [Required]
-        public required string LocationName { get; set; }
+        public int ViewCount { get; set; } = 0;
 
         public bool IsEnabled { get; set; } = true;
-        public int ViewCount { get; set; } = 0;
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        
+
         public DateTime? UpdatedAt { get; set; }
-        
-        public Category? Category { get; set; }
-        public User? User { get; set; }
+
+        [ForeignKey("CategoryId")]
+        public virtual Category Category { get; set; } = null!;
+
+        [ForeignKey("UserId")]
+        public virtual User User { get; set; } = null!;
     }
 }

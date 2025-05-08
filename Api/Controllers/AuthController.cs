@@ -14,14 +14,6 @@ namespace Nonuso.Api.Controllers
         private readonly IAuthService _authService = authService;
         private readonly CurrentUser _currentUser = currentUser;
 
-        [HttpGet]
-        [Authorize]
-        public IActionResult DebugClaims()
-        {
-            var claims = User.Claims.Select(c => new { c.Type, c.Value });
-            return Ok(claims);
-        }
-
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetCurrentUser()
@@ -58,7 +50,7 @@ namespace Nonuso.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> RefreshToken(RefreshTokenParamModel model)
         {
-            return Ok(await _authService.RefreshTokenAsync(_currentUser.Id, model.RefreshToken));
+            return Ok(await _authService.RefreshTokenAsync(model));
         }
 
         [HttpGet]

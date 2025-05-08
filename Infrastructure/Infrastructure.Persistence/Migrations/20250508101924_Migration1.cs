@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 
 #nullable disable
 
@@ -9,11 +11,14 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class Migration1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:postgis", ",,");
+
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -249,13 +254,15 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ImagesUrl = table.Column<string>(type: "text", nullable: false),
                     CategoryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ImagesUrl = table.Column<string>(type: "text", nullable: true),
-                    Latitude = table.Column<double>(type: "double precision", nullable: false),
-                    Longitude = table.Column<double>(type: "double precision", nullable: false),
-                    LocationName = table.Column<string>(type: "text", nullable: false),
-                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    Location = table.Column<Point>(type: "geometry", nullable: false),
+                    LocationName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    SearchVector = table.Column<NpgsqlTsVector>(type: "tsvector", nullable: false)
+                        .Annotation("Npgsql:TsVectorConfig", "simple")
+                        .Annotation("Npgsql:TsVectorProperties", new[] { "Title", "Description" }),
                     ViewCount = table.Column<int>(type: "integer", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -392,6 +399,18 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 name: "IX_Product_CategoryId",
                 table: "Product",
                 column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Product_Location",
+                table: "Product",
+                column: "Location")
+                .Annotation("Npgsql:IndexMethod", "GIST");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Product_SearchVector",
+                table: "Product",
+                column: "SearchVector")
+                .Annotation("Npgsql:IndexMethod", "GIN");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Product_UserId",

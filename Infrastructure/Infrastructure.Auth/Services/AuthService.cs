@@ -153,9 +153,9 @@ namespace Nonuso.Infrastructure.Auth.Services
             await _userManager.UpdateAsync(user);
         }
 
-        public async Task<UserResultModel> RefreshTokenAsync(Guid userId, string refreshToken)
+        public async Task<UserResultModel> RefreshTokenAsync(RefreshTokenParamModel model)
         {
-            var storedToken = await _authRepository.GetRefreshTokenByUserIdAsync(userId, refreshToken);
+            var storedToken = await _authRepository.GetRefreshTokenByUserIdAsync(model.UserId, model.RefreshToken);
 
             if (storedToken == null || storedToken.ExpirationDate < DateTime.UtcNow)
                 throw new UnauthorizedAccessException();

@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="9.0.4" />
+    <PackageReference Include="NetTopologySuite" Version="2.6.0" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
   </ItemGroup>
 
   <ItemGroup>

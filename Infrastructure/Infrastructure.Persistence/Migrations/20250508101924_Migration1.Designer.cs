@@ -4,16 +4,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Nonuso.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 
 #nullable disable
 
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(NonusoDbContext))]
-    [Migration("20250501075146_FirstMigration")]
-    partial class FirstMigration
+    [Migration("20250508101924_Migration1")]
+    partial class Migration1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +25,7 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -406,20 +409,27 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("ImagesUrl")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
 
-                    b.Property<double>("Latitude")
-                        .HasColumnType("double precision");
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geometry");
 
                     b.Property<string>("LocationName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
-                    b.Property<double>("Longitude")
-                        .HasColumnType("double precision");
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "simple")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Title", "Description" });
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -438,6 +448,14 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("Location");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "GIST");
+
+                    b.HasIndex("SearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
                     b.HasIndex("UserId");
 

@@ -18,11 +18,26 @@ namespace Nonuso.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
-            modelBuilder.Entity<Product>()
-                .HasOne(x => x.Category)
-                .WithMany()
-                .HasForeignKey(x => x.CategoryId);
+
+            //modelBuilder.Entity<Product>()
+            //    .HasOne(x => x.Category)
+            //    .WithMany()
+            //    .HasForeignKey(x => x.CategoryId);
+
+            modelBuilder.Entity<Product>(entity =>
+            {
+                entity.HasIndex(x => x.UserId);
+                entity.HasIndex(x => x.CategoryId);
+
+                entity.HasGeneratedTsVectorColumn(
+                    p => p.SearchVector,
+                    "simple",
+                    p => new { p.Title, p.Description })
+                    .HasIndex(p => p.SearchVector)
+                    .HasMethod("GIN");
+
+                entity.HasIndex(p => p.Location).HasMethod("GIST");
+            });
 
             modelBuilder.Entity<ProductHistory>()
               .HasOne(x => x.User)
