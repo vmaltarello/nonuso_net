@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Nonuso.Common;
+using NetTopologySuite.Geometries;
+using Nonuso.Common.Filters;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
 using Nonuso.Domain.Models;
@@ -10,9 +11,9 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
-        public async Task<ProductDetailModel?> GetDetailsAsync(Guid id, Guid userId)
+        public async Task<ProductDetailModel?> GetByIdAsync(Guid id, Guid userId)
         {
-            var entity = _context.Product.FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await _context.Product.Include(x => x.User).FirstOrDefaultAsync(x => x.Id == id);
 
             if (entity == null) return null;
 
@@ -20,12 +21,21 @@ namespace Nonuso.Infrastructure.Persistence.Repos
             var isMyFavorite = favorites.FirstOrDefault(x => x.UserId == userId) != null;
             var favoritesCount = favorites.Count;
 
-            var result = entity.To<ProductDetailModel>();
-
-            result.IsMyFavorite = isMyFavorite;
-            result.FavoriteCount = favoritesCount;
-
-            return result;
+            return new ProductDetailModel() 
+            {
+                Id = id,
+                Title = entity.Title,
+                Description = entity.Description,
+                LocationName = entity.LocationName,
+                CategoryId = entity.CategoryId,
+                CreatedAt = entity.CreatedAt,
+                UserId = entity.UserId,
+                IsMyFavorite = isMyFavorite,
+                FavoriteCount = favoritesCount,
+                ImagesUrl = entity.ImagesUrl,
+                UserName = entity.User.UserName!,
+                IsMyProduct = entity.UserId == userId
+            };
         }
 
         public async Task<Product?> GetByIdAsync(Guid id)
@@ -50,6 +60,88 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 .Take(5)
                 .Select(x => x.Product)
                 .ToListAsync();           
+        }
+
+        public async Task<IEnumerable<Product>> GetAllActiveAsync(Guid userId)
+        {
+            return await _context.Product
+                .Where(x => x.UserId == userId && x.IsEnabled)
+                .Include(x => x.User)
+                .OrderByDescending(x => x.UpdatedAt)
+                .ThenByDescending(x => x.CreatedAt)
+                .Take(5)
+                .Select(x => x)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Product>> SearchAsync(ProductFilter filters)
+        {
+            filters.UserId = null;
+            var pageSize = 30;
+            var skip = filters.Page * pageSize;     
+
+            bool isLocationSearch = filters.Lat.HasValue && filters.Lon.HasValue && filters.Distance.HasValue;
+
+            IQueryable<Product> baseQuery = _context.Product.Include(p => p.User).Where(p => p.IsEnabled);
+
+            if (filters.CategoryId.HasValue)
+                baseQuery = baseQuery.Where(p => p.CategoryId == filters.CategoryId.Value);
+
+            if (filters.UserId.HasValue)
+                baseQuery = baseQuery.Where(p => p.UserId != filters.UserId.Value);
+
+            if (!string.IsNullOrEmpty(filters.Search))
+            {
+                baseQuery = baseQuery.Where(p => p.SearchVector.Matches(filters.Search));
+
+            }
+
+            var productsQuery = from p in baseQuery
+                                join f in _context.Favorite.Where(f => filters.UserId.HasValue 
+                                && f.UserId == filters.UserId.Value)
+                                     on p.Id equals f.ProductId into userFavs
+                                from uf in userFavs.DefaultIfEmpty()
+                                select new
+                                {
+                                    Product = p,
+                                    IsFavorite = uf != null,
+                                    Distance = isLocationSearch
+                                       ? p.Location.Distance(
+                                           new Point(filters.Lon!.Value, filters.Lat!.Value) { SRID = 4326 }
+                                         ) / 1000.0
+                                       : 0.0
+                                };
+
+            if (isLocationSearch)
+            {
+                productsQuery = productsQuery.Where(p => p.Distance <= filters.Distance!.Value)
+                    .OrderBy(x => x.Distance);
+
+            }
+
+            productsQuery = productsQuery
+               .OrderBy(p => p.Product.UpdatedAt ?? p.Product.CreatedAt)
+               .ThenByDescending(p => p.Product.CreatedAt);
+
+            var paginatedProducts = await productsQuery
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(x => x.Product)
+                .ToListAsync();
+
+            return paginatedProducts;
+
+        }
+
+        private string FormatSearchQuery(string input)
+        {
+            // Rimuovi caratteri speciali e prepara la query per tsquery
+            var cleanQuery = string.Join(" & ",
+                input.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(term => term.Trim() + ":*")  // Aggiunge il prefisso per la ricerca
+            );
+
+            return cleanQuery;
         }
 
         public async Task CreateAsync(Product entity)

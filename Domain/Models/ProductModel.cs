@@ -4,7 +4,9 @@ namespace Nonuso.Domain.Models
 {
     public class ProductDetailModel : Product
     {
+        public required string UserName { get; set; }
         public bool IsMyFavorite { get; set; }
+        public bool IsMyProduct { get; set; }
         public int FavoriteCount { get; set; }
     }
 }

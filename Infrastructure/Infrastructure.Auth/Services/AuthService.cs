@@ -158,7 +158,7 @@ namespace Nonuso.Infrastructure.Auth.Services
             var storedToken = await _authRepository.GetRefreshTokenByUserIdAsync(model.UserId, model.RefreshToken);
 
             if (storedToken == null || storedToken.ExpirationDate < DateTime.UtcNow)
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedException();
 
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 

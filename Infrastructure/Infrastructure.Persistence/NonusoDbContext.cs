@@ -14,6 +14,10 @@ namespace Nonuso.Infrastructure.Persistence
         public DbSet<ProductHistory> ProductHistory { get; set; }
         public DbSet<LastSearch> LastSearch { get; set; }
         public DbSet<RefreshToken> RefreshToken { get; set; }
+        public DbSet<ProductRequest> ProductRequest { get; set; }
+        public DbSet<Conversation> Conversation { get; set; }
+        public DbSet<Message> Message { get; set; }
+        public DbSet<MessageInfo> MessageInfo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,6 +41,7 @@ namespace Nonuso.Infrastructure.Persistence
                     .HasMethod("GIN");
 
                 entity.HasIndex(p => p.Location).HasMethod("GIST");
+
             });
 
             modelBuilder.Entity<ProductHistory>()
@@ -60,6 +65,7 @@ namespace Nonuso.Infrastructure.Persistence
              .HasForeignKey(x => x.UserId);
 
             CategoryConfiguration.PopulateCategoryTable(modelBuilder);
+            //RoleConfiguration..PopulateCategoryTable(modelBuilder);
 
             //modelBuilder.Entity<Favorite>().HasIndex("OwnerId");
             //modelBuilder.Entity<Product>().HasIndex("OwnerId");

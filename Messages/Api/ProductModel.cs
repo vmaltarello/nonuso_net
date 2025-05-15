@@ -3,40 +3,45 @@ using Nonuso.Messages.Api.Base;
 
 namespace Nonuso.Messages.Api
 {
-    public class ProductBaseModel : IModel
-	{
+    public class ProductLocationModel
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public required string LocationName { get; set; }
+    }
+
+    public class ProductModel : IModel
+    {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public required string Title { get; set; }
         public required string Description { get; set; }
         public required Guid CategoryId { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public required string LocationName { get; set; }
-        public string ImagesURL { get; set; }
-      
+        public string[] ImagesURL { get; set; } = [];
     }
 
-    public class ProductModel : ProductBaseModel
+    public class ProductParamModel : ProductLocationModel
     {
-		// Place
-    }
-
-	public class ProductParamModel : ProductModel 
-    {
+        public Guid UserId { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
+        public required Guid CategoryId { get; set; }
         public IEnumerable<IFormFile> Images { get; set; } = [];
     }
 
-    public class ProductResultModel : ProductModel 
+    public class ProductResultModel : ProductModel
     {
-        public string[] ImagesURLs { get { return ImagesURL.Split(',') ?? []; } }
+        public required string LocationName { get; set; }
         public required DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
 
-    public class ProductDetailResultModel : ProductModel 
+    public class ProductDetailResultModel : ProductResultModel
     {
-        public bool IsMyFavorite { get; set; }
-        public int FavoriteCount { get; set; }
+        public string UserName { get; set; } = null!;
+        public bool IsMyFavorite { get; set; } = false;
+        public bool IsMyProduct { get; set; } = false;
+        public int FavoriteCount { get; set; } = 0;
+
     }
 }

@@ -6,6 +6,12 @@ namespace Nonuso.Common
     {
         public static TOutput To<TOutput>(this object obj, JsonSerializerSettings? settings = null)
         {
+            settings ??= new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+
             return JsonConvert.DeserializeObject<TOutput>(JsonConvert.SerializeObject(obj), settings)!;
         }
 

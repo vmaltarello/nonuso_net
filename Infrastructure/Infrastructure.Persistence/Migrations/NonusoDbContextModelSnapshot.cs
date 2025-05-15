@@ -340,6 +340,26 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Nonuso.Domain.Entities.Conversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductRequestId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductRequestId")
+                        .IsUnique();
+
+                    b.ToTable("Conversation");
+                });
+
             modelBuilder.Entity("Nonuso.Domain.Entities.Favorite", b =>
                 {
                     b.Property<Guid>("Id")
@@ -386,6 +406,73 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("LastSearch");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Message", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DeletedForReceiver")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("DeletedForSender")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsAttachment")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Message");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.MessageInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("LastReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UnreadCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Visible")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MessageInfo");
                 });
 
             modelBuilder.Entity("Nonuso.Domain.Entities.Product", b =>
@@ -488,6 +575,49 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ProductHistory");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ExchangeProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ExchangeType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestedId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExchangeProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("RequestedId");
+
+                    b.HasIndex("RequesterId");
+
+                    b.ToTable("ProductRequest");
                 });
 
             modelBuilder.Entity("Nonuso.Domain.Entities.RefreshToken", b =>
@@ -648,6 +778,17 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Nonuso.Domain.Entities.Conversation", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.ProductRequest", "ProductRequest")
+                        .WithOne("Conversation")
+                        .HasForeignKey("Nonuso.Domain.Entities.Conversation", "ProductRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductRequest");
+                });
+
             modelBuilder.Entity("Nonuso.Domain.Entities.Favorite", b =>
                 {
                     b.HasOne("Nonuso.Domain.Entities.Product", "Product")
@@ -674,6 +815,44 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Message", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "SenderUser")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("SenderUser");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.MessageInfo", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.Conversation", "Conversation")
+                        .WithMany("MessageInfo")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
 
                     b.Navigation("User");
                 });
@@ -708,6 +887,39 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductRequest", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.Product", "ExchangeProduct")
+                        .WithMany()
+                        .HasForeignKey("ExchangeProductId");
+
+                    b.HasOne("Nonuso.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "RequestedUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "RequesterUser")
+                        .WithMany()
+                        .HasForeignKey("RequesterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ExchangeProduct");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("RequestedUser");
+
+                    b.Navigation("RequesterUser");
+                });
+
             modelBuilder.Entity("Nonuso.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Nonuso.Domain.Entities.User", "User")
@@ -717,6 +929,19 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Conversation", b =>
+                {
+                    b.Navigation("MessageInfo");
+
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductRequest", b =>
+                {
+                    b.Navigation("Conversation")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

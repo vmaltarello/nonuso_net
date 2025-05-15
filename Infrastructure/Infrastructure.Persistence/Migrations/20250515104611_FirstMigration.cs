@@ -11,7 +11,7 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class Migration1 : Migration
+    public partial class FirstMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -309,6 +309,125 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ProductRequest",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RequesterId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RequestedId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ExchangeProductId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ExchangeType = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductRequest", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductRequest_AspNetUsers_RequestedId",
+                        column: x => x.RequestedId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProductRequest_AspNetUsers_RequesterId",
+                        column: x => x.RequesterId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProductRequest_Product_ExchangeProductId",
+                        column: x => x.ExchangeProductId,
+                        principalTable: "Product",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ProductRequest_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Conversation",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductRequestId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Conversation", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Conversation_ProductRequest_ProductRequestId",
+                        column: x => x.ProductRequestId,
+                        principalTable: "ProductRequest",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Message",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SenderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    IsAttachment = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedForSender = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedForReceiver = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Message", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Message_AspNetUsers_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Message_Conversation_ConversationId",
+                        column: x => x.ConversationId,
+                        principalTable: "Conversation",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MessageInfo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Visible = table.Column<bool>(type: "boolean", nullable: false),
+                    UnreadCount = table.Column<int>(type: "integer", nullable: false),
+                    LastReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MessageInfo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MessageInfo_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MessageInfo_Conversation_ConversationId",
+                        column: x => x.ConversationId,
+                        principalTable: "Conversation",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Category",
                 columns: new[] { "Id", "Description", "DescriptionEN" },
@@ -381,6 +500,12 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Conversation_ProductRequestId",
+                table: "Conversation",
+                column: "ProductRequestId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Favorite_ProductId",
                 table: "Favorite",
                 column: "ProductId");
@@ -393,6 +518,26 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_LastSearch_UserId",
                 table: "LastSearch",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Message_ConversationId",
+                table: "Message",
+                column: "ConversationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Message_SenderId",
+                table: "Message",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageInfo_ConversationId",
+                table: "MessageInfo",
+                column: "ConversationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageInfo_UserId",
+                table: "MessageInfo",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -421,6 +566,26 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 name: "IX_ProductHistory_UserId",
                 table: "ProductHistory",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductRequest_ExchangeProductId",
+                table: "ProductRequest",
+                column: "ExchangeProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductRequest_ProductId",
+                table: "ProductRequest",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductRequest_RequestedId",
+                table: "ProductRequest",
+                column: "RequestedId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductRequest_RequesterId",
+                table: "ProductRequest",
+                column: "RequesterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshToken_UserId",
@@ -453,6 +618,12 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 name: "LastSearch");
 
             migrationBuilder.DropTable(
+                name: "Message");
+
+            migrationBuilder.DropTable(
+                name: "MessageInfo");
+
+            migrationBuilder.DropTable(
                 name: "ProductHistory");
 
             migrationBuilder.DropTable(
@@ -460,6 +631,12 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Conversation");
+
+            migrationBuilder.DropTable(
+                name: "ProductRequest");
 
             migrationBuilder.DropTable(
                 name: "Product");

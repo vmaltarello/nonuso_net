@@ -11,18 +11,15 @@ namespace Nonuso.Infrastructure.Persistence.Configurations
             builder.HasData(
             new IdentityRole
             {
-                Name = "Visitor",
-                NormalizedName = "VISITOR"
+                Name = "User"
             },
             new IdentityRole
             {
-                Name = "Administrator",
-                NormalizedName = "ADMINISTRATOR"
+                Name = "Admin"
             },
             new IdentityRole
             {
-                Name = "Business",
-                NormalizedName = "BUSINESS"
+                Name = "Business"
             });
         }
     }
