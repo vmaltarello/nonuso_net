@@ -21,6 +21,8 @@ namespace Nonuso.Infrastructure.Persistence
             services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ILastSearchRepository, LastSearchRepository>();
+            services.AddScoped<IProductRequestRepository, ProductRequestRepository>();
+            services.AddScoped<IConversationRepository, ConversationRepository>();
 
             return services;
         }

@@ -21,6 +21,8 @@ namespace Nonuso.Application
             services.AddScoped<IFavoriteService, FavoriteService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ILastSearchService, LastSearchService>();
+            services.AddScoped<IProductRequestService, ProductRequestService>();
+            services.AddScoped<IConversationService, ConversationService>();
 
             return services;
         }

@@ -8,7 +8,6 @@ namespace Nonuso.Infrastructure.Notification
         public static IServiceCollection AddInfrastructureNotification(this IServiceCollection services)
         {
             services.AddHttpClient<IOneSignalService, OneSignalService>();
-
             return services;
         }
     }

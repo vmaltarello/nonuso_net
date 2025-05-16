@@ -12,11 +12,16 @@ namespace Nonuso.Application
 
         internal Mapper()
         {
+            CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
+
             CreateMap<ProductDetailModel, ProductDetailResultModel>()
                 .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
 
             CreateMap<Product, ProductResultModel>()
                 .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+
+            CreateMap<Product, ProductModel>()
+               .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
         }
     }
 }

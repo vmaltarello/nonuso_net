@@ -19,12 +19,6 @@ namespace Nonuso.Domain.Entities
         public bool IsAttachment { get; set; } = false;
 
         [Required]
-        public bool DeletedForSender { get; set; } = false;
-
-        [Required]
-        public bool DeletedForReceiver { get; set; } = false;
-
-        [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("ConversationId")]

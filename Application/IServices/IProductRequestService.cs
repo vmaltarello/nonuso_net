@@ -1,0 +1,11 @@
+﻿using Nonuso.Domain.Entities;
+using Nonuso.Messages.Api;
+
+namespace Nonuso.Application.IServices
+{
+    public interface IProductRequestService
+    {
+        Task CreateAsync(ProductRequestParamModel model);
+        Task<ProductRequestResultModel?> GetActiveAsync(Guid userId, Guid productId);
+    }
+}

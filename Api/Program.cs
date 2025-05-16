@@ -6,6 +6,7 @@ using Nonuso.Domain;
 using Nonuso.Infrastructure.Auth;
 using Nonuso.Infrastructure.Notification;
 using Nonuso.Infrastructure.Persistence;
+using Nonuso.Infrastructure.Realtime;
 using Nonuso.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ builder.Services.AddInfrastructurePersistence(builder.Configuration);
 builder.Services.AddInfrastructureAuth(builder.Configuration);
 builder.Services.AddInfrastructureS3Storage(builder.Configuration);
 builder.Services.AddInfrastructureNotification();
+builder.Services.AddInfrastructureRealtime();
 builder.Services.AddApplication();
 builder.Services.AddValidators();
 

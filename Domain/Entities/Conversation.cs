@@ -14,7 +14,7 @@ namespace Nonuso.Domain.Entities
 
         public ICollection<Message> Messages { get; set; } = [];
 
-        public ICollection<MessageInfo> MessageInfo { get; set; } = [];
+        public ICollection<ConversationInfo> ConversationsInfo { get; set; } = [];
 
         [ForeignKey("ProductRequestId")]
         public ProductRequest? ProductRequest { get; set; }

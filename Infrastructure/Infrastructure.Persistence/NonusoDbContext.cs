@@ -17,7 +17,7 @@ namespace Nonuso.Infrastructure.Persistence
         public DbSet<ProductRequest> ProductRequest { get; set; }
         public DbSet<Conversation> Conversation { get; set; }
         public DbSet<Message> Message { get; set; }
-        public DbSet<MessageInfo> MessageInfo { get; set; }
+        public DbSet<ConversationInfo> MessageInfo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
