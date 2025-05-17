@@ -1,7 +1,16 @@
-﻿using Nonuso.Messages.Api.Base;
+﻿using Nonuso.Messages.Api;
+using Nonuso.Messages.Api.Base;
 
 namespace Nonuso.Messages.Api
 {
+    public class MessageResultModel
+    {
+        public bool IsMine { get; set; } = false;
+        public required string Content { get; set; }
+        public bool IsAttachment { get; set; } = false;
+        public DateTime CreatedAt { get; set; }
+    }
+
     public class ConversationModel : IModel
     {
         public Guid Id { get; set; }
@@ -10,8 +19,20 @@ namespace Nonuso.Messages.Api
 
     }
 
-    public class ConversationResultModel : ConversationModel 
+    public class ConversationResultModel
     {
-        public required ProductResultModel Product { get; set; }
+        public Guid Id { get; set; }
+        public required string LastMessage { get; set; }
+        public DateTime LastMessageDate { get; set; }
+        public required ProductRequestModel ProductRequest { get; set; }
+        public required UserModel ChatWithUser { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class ChatResultModel
+    {
+        public required ProductRequestModel ProductRequest { get; set; }
+        public required UserModel ChatWithUser { get; set; }
+        public IEnumerable<MessageResultModel> Messages { get; set; } = [];
     }
 }

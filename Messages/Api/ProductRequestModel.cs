@@ -16,7 +16,7 @@ namespace Nonuso.Messages.Api
     public class ProductRequestModel : IModel
     {
         public Guid Id { get; set; }
-        public Guid ProductId { get; set; }
+        public required ProductResultModel Product { get; set; }
         public Guid RequesterId { get; set; }
         public Guid RequestedId { get; set; }
         public ProductRequestStatusModel Status { get; set; }

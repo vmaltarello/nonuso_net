@@ -11,18 +11,37 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         public async Task<IEnumerable<Domain.Models.ConversationModel>> GetAllAsync(Guid userId)
         {
-            return await _context.Conversation.Include(x => x.ProductRequest).ThenInclude(x => x.Product)
-                .Where(x => x.ProductRequest != null 
-                            && (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId))
-                
+
+            return await _context.ProductRequest.Where(x => x.RequesterId == userId || x.RequestedId == userId)
+                .Include(x => x.Product)
+                .OrderByDescending(x => x.Conversation.CreatedAt)
                 .Select(x => new ConversationModel() 
                 {
-                    Product = x.ProductRequest!.Product!,
-                    Id = x.Id,
-                    CreatedAt = x.CreatedAt,
-                    ProductRequestId = x.ProductRequestId
+                    Id = x.Conversation.Id,
+                    ProductRequest = x,
+                    CreatedAt = x.Conversation.CreatedAt,
+                    LastMessage = x.Conversation.Messages.First().Content ?? string.Empty,
+                    LastMessageDate = x.Conversation.Messages.First().CreatedAt,
+                    ChatWithUser = x.RequestedId == userId ? x.RequestedUser! : x.RequesterUser!
                 })
-                .ToListAsync();
+                .ToListAsync();           
+        }
+
+        public async Task<IEnumerable<ChatModel>> GetMessagesAsync(Guid id, Guid userId)
+        {
+            return await _context.ProductRequest.Where(x => x.Conversation.Id == id).Include(x => x.Product)
+                .Select(x => new ChatModel()
+                {
+                    ProductRequest = x,
+                    ChatWithUser = x.RequestedId == userId ? x.RequestedUser! : x.RequesterUser!,
+                    Messages = x.Conversation.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel() 
+                    {
+                        IsMine = x.SenderId == userId,
+                        Content = x.Content ?? string.Empty,
+                        IsAttachment = x.IsAttachment,
+                        CreatedAt = x.CreatedAt
+                    })                
+                }).ToListAsync();
         }
     }
 }

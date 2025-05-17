@@ -13,6 +13,10 @@ namespace Nonuso.Application
         internal Mapper()
         {
             CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
+            CreateMap<User, UserModel>();
+            CreateMap<ProductRequest, ProductRequestModel>();
+            CreateMap<ChatModel, ChatResultModel>();
+            CreateMap<MessageModel, MessageResultModel>();
 
             CreateMap<ProductDetailModel, ProductDetailResultModel>()
                 .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
