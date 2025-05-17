@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using Nonuso.Application.IServices;
-using Nonuso.Common;
 using Nonuso.Domain.IRepos;
-using Nonuso.Domain.Models;
 using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
@@ -19,13 +17,6 @@ namespace Nonuso.Application.Services
             var result = await _conversationRepository.GetAllAsync(userId);
 
             return _mapper.Map<ConversationResultModel[]>(result);
-        }
-
-        public async Task<IEnumerable<ChatResultModel>> GetMessagesAsync(Guid id, Guid userId)
-        {
-           var result = await _conversationRepository.GetMessagesAsync(id, userId);
-
-            return _mapper.Map<ChatResultModel[]>(result);
-        }        
+        }    
     }
 }

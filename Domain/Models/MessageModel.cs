@@ -2,6 +2,7 @@
 {
     public class MessageModel
     {
+        public Guid Id { get; set; }
         public bool IsMine { get; set; } = false;
         public required string Content { get; set; }
         public bool IsAttachment { get; set; } = false;

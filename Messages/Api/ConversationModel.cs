@@ -5,6 +5,7 @@ namespace Nonuso.Messages.Api
 {
     public class MessageResultModel
     {
+        public Guid Id { get; set; }
         public bool IsMine { get; set; } = false;
         public required string Content { get; set; }
         public bool IsAttachment { get; set; } = false;

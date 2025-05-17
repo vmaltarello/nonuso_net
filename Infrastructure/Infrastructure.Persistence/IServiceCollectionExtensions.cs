@@ -23,6 +23,7 @@ namespace Nonuso.Infrastructure.Persistence
             services.AddScoped<ILastSearchRepository, LastSearchRepository>();
             services.AddScoped<IProductRequestRepository, ProductRequestRepository>();
             services.AddScoped<IConversationRepository, ConversationRepository>();
+            services.AddScoped<IChatRepository, ChatRepository>();
 
             return services;
         }

@@ -23,6 +23,7 @@ namespace Nonuso.Application
             services.AddScoped<ILastSearchService, LastSearchService>();
             services.AddScoped<IProductRequestService, ProductRequestService>();
             services.AddScoped<IConversationService, ConversationService>();
+            services.AddScoped<IChatService, ChatService>();
 
             return services;
         }

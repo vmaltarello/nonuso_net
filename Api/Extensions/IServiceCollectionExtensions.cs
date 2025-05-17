@@ -50,6 +50,8 @@ namespace Nonuso.Api.Extensions
                 };
             });
 
+            services.AddSignalR();
+
             return services;
         }
     }
