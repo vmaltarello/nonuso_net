@@ -1,8 +1,14 @@
-﻿using Nonuso.Messages.Api;
-using Nonuso.Messages.Api.Base;
+﻿using Nonuso.Messages.Api.Base;
 
 namespace Nonuso.Messages.Api
 {
+    public class MessageParamModel
+    {
+        public Guid ConversationId { get; set; }
+        public Guid SenderId { get; set; }
+        public required string Content { get;set; }
+    }
+
     public class MessageResultModel
     {
         public Guid Id { get; set; }

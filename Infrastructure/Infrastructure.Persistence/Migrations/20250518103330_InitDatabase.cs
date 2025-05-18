@@ -11,7 +11,7 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class InitDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -371,6 +371,33 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ConversationInfo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Visible = table.Column<bool>(type: "boolean", nullable: false),
+                    UnreadCount = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConversationInfo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ConversationInfo_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ConversationInfo_Conversation_ConversationId",
+                        column: x => x.ConversationId,
+                        principalTable: "Conversation",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Message",
                 columns: table => new
                 {
@@ -379,8 +406,6 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     SenderId = table.Column<Guid>(type: "uuid", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
                     IsAttachment = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedForSender = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedForReceiver = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -394,34 +419,6 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Message_Conversation_ConversationId",
-                        column: x => x.ConversationId,
-                        principalTable: "Conversation",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "MessageInfo",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Visible = table.Column<bool>(type: "boolean", nullable: false),
-                    UnreadCount = table.Column<int>(type: "integer", nullable: false),
-                    LastReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MessageInfo", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MessageInfo_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MessageInfo_Conversation_ConversationId",
                         column: x => x.ConversationId,
                         principalTable: "Conversation",
                         principalColumn: "Id",
@@ -506,6 +503,16 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ConversationInfo_ConversationId",
+                table: "ConversationInfo",
+                column: "ConversationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ConversationInfo_UserId",
+                table: "ConversationInfo",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Favorite_ProductId",
                 table: "Favorite",
                 column: "ProductId");
@@ -529,16 +536,6 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 name: "IX_Message_SenderId",
                 table: "Message",
                 column: "SenderId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MessageInfo_ConversationId",
-                table: "MessageInfo",
-                column: "ConversationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MessageInfo_UserId",
-                table: "MessageInfo",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Product_CategoryId",
@@ -612,6 +609,9 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "ConversationInfo");
+
+            migrationBuilder.DropTable(
                 name: "Favorite");
 
             migrationBuilder.DropTable(
@@ -619,9 +619,6 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Message");
-
-            migrationBuilder.DropTable(
-                name: "MessageInfo");
 
             migrationBuilder.DropTable(
                 name: "ProductHistory");

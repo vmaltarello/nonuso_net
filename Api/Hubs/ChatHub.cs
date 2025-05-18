@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Nonuso.Api.Common;
 using Nonuso.Application.IServices;
 
 namespace Nonuso.Api.Hubs
 {
-    public class ChatHub(IChatService chatService) : Hub
+    public class ChatHub(IChatService chatService, CurrentUser currentUser) : Hub
     {
         readonly IChatService _chatService = chatService;
+        readonly CurrentUser _currentUser = currentUser;
 
         public override async Task OnConnectedAsync()
         {
@@ -21,16 +23,10 @@ namespace Nonuso.Api.Hubs
 
         public async Task SendMessage(Guid conversationId, string content)
         {
-            var userId = Context.UserIdentifier!;
+            var result = await _chatService.CreateAsync(new Messages.Api.MessageParamModel() { ConversationId = conversationId, SenderId =
+                            _currentUser.Id, Content = content});
 
-            await _chatService.CreateAsync(conversationId, Guid.Parse(userId), content);
-
-            await Clients.Group(conversationId.ToString()).SendAsync("ReceiveMessage", new
-            {
-                senderId = userId,
-                content,
-                sentAt = DateTime.UtcNow
-            });
+            await Clients.Group(conversationId.ToString()).SendAsync("ReceiveMessage", result);
         }
     }
 }

@@ -1,9 +1,12 @@
-﻿using Nonuso.Domain.Models;
+﻿using Nonuso.Domain.Entities;
+using Nonuso.Domain.Models;
 
 namespace Nonuso.Domain.IRepos
 {
     public interface IChatRepository
     {
+        Task CreateAsync(Message entity);
+        Task<MessageModel?> GetMessageById(Guid id, Guid userId);
         Task<ChatModel?> GetByConversationIdAsync(Guid id, Guid userId);
     }
 }

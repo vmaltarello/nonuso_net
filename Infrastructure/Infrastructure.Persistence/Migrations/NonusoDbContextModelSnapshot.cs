@@ -384,7 +384,7 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MessageInfo");
+                    b.ToTable("ConversationInfo");
                 });
 
             modelBuilder.Entity("Nonuso.Domain.Entities.Favorite", b =>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
 using Nonuso.Domain.Models;
 
@@ -7,6 +8,24 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     internal class ChatRepository(NonusoDbContext context) : IChatRepository
     {
         private readonly NonusoDbContext _context = context;
+
+        public async Task CreateAsync(Message entity)
+        {
+            _context.Message.Add(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<MessageModel?> GetMessageById(Guid id, Guid userId)
+        {
+            return await _context.Message.Select(x => new MessageModel() 
+            {
+                Id = x.Id,
+                Content = x.Content ?? string.Empty,
+                IsAttachment = x.IsAttachment,
+                CreatedAt = x.CreatedAt,
+                IsMine = x.SenderId == userId
+            }).FirstOrDefaultAsync(x => x.Id == id);
+        }
 
         public async Task<ChatModel?> GetByConversationIdAsync(Guid id, Guid userId)
         {

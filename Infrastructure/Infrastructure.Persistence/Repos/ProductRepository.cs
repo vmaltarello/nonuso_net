@@ -76,7 +76,6 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         public async Task<IEnumerable<Product>> SearchAsync(ProductFilter filters)
         {
-            filters.UserId = null;
             var pageSize = 30;
             var skip = filters.Page * pageSize;     
 

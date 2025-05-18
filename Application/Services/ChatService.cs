@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using Nonuso.Application.IServices;
+using Nonuso.Common;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
+using Nonuso.Domain.Models;
 using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
@@ -14,9 +16,15 @@ namespace Nonuso.Application.Services
         readonly IMapper _mapper = mapper;
         readonly IChatRepository _chatRepository = chatRepository;
 
-        public async Task CreateAsync(Guid conversationId, Guid userId, string content)
+        public async Task<MessageResultModel> CreateAsync(MessageParamModel model)
         {
+            var entity = model.To<Message>();
 
+            await _chatRepository.CreateAsync(entity);
+
+            var result = await _chatRepository.GetMessageById(entity.Id, model.SenderId);
+
+            return _mapper.Map<MessageResultModel>(result);
         }
 
         public async Task<ChatResultModel> GetByConversationIdAsync(Guid id, Guid userId)
