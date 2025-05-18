@@ -1,0 +1,40 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Nonuso.Infrastructure.Persistence.Migrations
+{
+    /// <inheritdoc />
+    public partial class Migration1 : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<DateTime>(
+                name: "DeletedAt",
+                table: "AspNetUsers",
+                type: "timestamp with time zone",
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsEnabled",
+                table: "AspNetUsers",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "DeletedAt",
+                table: "AspNetUsers");
+
+            migrationBuilder.DropColumn(
+                name: "IsEnabled",
+                table: "AspNetUsers");
+        }
+    }
+}

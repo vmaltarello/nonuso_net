@@ -48,6 +48,13 @@ namespace Nonuso.Api.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> Delete()
+        {
+            await _authService.DeleteAsync(_currentUser.Id);
+            return NoContent();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> RefreshToken(RefreshTokenParamModel model)
         {
             return Ok(await _authService.RefreshTokenAsync(model));

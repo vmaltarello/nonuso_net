@@ -113,7 +113,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
                 if (user != null)
                 {
-                    if (!user.EmailConfirmed) return null;
+                    if (!user.EmailConfirmed || !user.IsEnabled) return null;
 
                     user.LastSignInAt = DateTime.UtcNow;
                     await _userManager.UpdateAsync(user);
@@ -129,10 +129,23 @@ namespace Nonuso.Infrastructure.Auth.Services
         {
             await _signInManager.SignOutAsync();
 
-            var refreshToken = await _authRepository.GetRefreshTokenByUserIdAsync(id)
-                ?? throw new EntityNotFoundException(nameof(RefreshToken));
+            var refreshToken = await _authRepository.GetRefreshTokenByUserIdAsync(id);
 
-            await _authRepository.RevokeRefreshTokenAsync(refreshToken);
+            if(refreshToken != null)
+                await _authRepository.RevokeRefreshTokenAsync(refreshToken);
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString())
+                ?? throw new EntityNotFoundException(nameof(User), id);
+            
+            await _authRepository.DeleteAsync(user);
+
+            var refreshToken = await _authRepository.GetRefreshTokenByUserIdAsync(id);
+
+            if (refreshToken != null)
+                await _authRepository.RevokeRefreshTokenAsync(refreshToken);
         }
 
         public async Task ChangePasswordAsync(UserChangePasswordModel model)

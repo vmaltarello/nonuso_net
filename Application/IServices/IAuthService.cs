@@ -9,6 +9,7 @@ namespace Nonuso.Application.IServices
         Task SignUpAsync(UserSignUpParamModel model);
         Task<UserResultModel?> SignInAsync(UserSignInParamModel model);
         Task SignOutAsync(Guid id);
+        Task DeleteAsync(Guid id);
         Task ChangePasswordAsync(UserChangePasswordModel model);
         Task ChangeUserNameAsync(Guid userId, string userName);
         Task<UserResultModel> RefreshTokenAsync(RefreshTokenParamModel model);

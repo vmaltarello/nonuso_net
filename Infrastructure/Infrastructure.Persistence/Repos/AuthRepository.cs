@@ -32,5 +32,17 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task DeleteAsync(User entity)
+        {
+            entity.IsEnabled = false;           
+            entity.DeletedAt = DateTime.UtcNow;
+            entity.UserName = entity.UserName + "_deleted";
+            entity.Email = entity.Email + "_deleted";
+
+            _context.Users.Update(entity);
+            
+            await _context.SaveChangesAsync();
+        }
     }
 }
