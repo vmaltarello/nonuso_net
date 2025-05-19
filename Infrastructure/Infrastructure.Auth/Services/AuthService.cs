@@ -148,12 +148,12 @@ namespace Nonuso.Infrastructure.Auth.Services
                 await _authRepository.RevokeRefreshTokenAsync(refreshToken);
         }
 
-        public async Task ChangePasswordAsync(UserChangePasswordModel model)
+        public async Task ChangePasswordAsync(string password, Guid userId)
         {
-            var user = await _userManager.FindByIdAsync(model.Id.ToString())
-                ?? throw new EntityNotFoundException(nameof(User), model.Id);
+            var user = await _userManager.FindByIdAsync(userId.ToString())
+                ?? throw new EntityNotFoundException(nameof(User), userId);
 
-            await _userManager.ChangePasswordAsync(user, user.PasswordHash!, model.Password);
+            await _userManager.ChangePasswordAsync(user, user.PasswordHash!, password);
         }
 
         public async Task ChangeUserNameAsync(Guid userId, string userName)

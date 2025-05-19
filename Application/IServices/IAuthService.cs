@@ -10,7 +10,7 @@ namespace Nonuso.Application.IServices
         Task<UserResultModel?> SignInAsync(UserSignInParamModel model);
         Task SignOutAsync(Guid id);
         Task DeleteAsync(Guid id);
-        Task ChangePasswordAsync(UserChangePasswordModel model);
+        Task ChangePasswordAsync(string password, Guid userId);
         Task ChangeUserNameAsync(Guid userId, string userName);
         Task<UserResultModel> RefreshTokenAsync(RefreshTokenParamModel model);
         Task<bool> UserNameIsUniqueAsync(string userName);

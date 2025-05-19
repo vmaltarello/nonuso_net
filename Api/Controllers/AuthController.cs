@@ -40,6 +40,7 @@ namespace Nonuso.Api.Controllers
             return Ok(await _authService.SignInAsync(model));
         }
 
+        [Authorize]
         [HttpPost]
         public new async Task<IActionResult> SignOut()
         {
@@ -47,6 +48,7 @@ namespace Nonuso.Api.Controllers
             return NoContent();
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Delete()
         {
@@ -70,6 +72,14 @@ namespace Nonuso.Api.Controllers
         public async Task<IActionResult> ConfirmEmail(string token, string email)
         {
             await _authService.ConfirmEmailAsync(token, email);
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(UserChangePasswordModel model)
+        {
+            await _authService.ChangePasswordAsync(model.Password, _currentUser.Id);
             return Ok();
         }
     }

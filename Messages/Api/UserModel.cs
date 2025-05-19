@@ -12,7 +12,6 @@ namespace Nonuso.Messages.Api
 
     public class  UserChangePasswordModel 
     {
-        public Guid Id { get; set; }
         public required string Password { get; set; }
     }
 
