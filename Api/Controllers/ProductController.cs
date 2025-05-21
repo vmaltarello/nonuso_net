@@ -15,6 +15,7 @@ namespace Nonuso.Api.Controllers
         private readonly IProductService _productService = productService;
         private readonly CurrentUser _currentUser = currentUser;
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -49,6 +50,16 @@ namespace Nonuso.Api.Controllers
             model.UserId = _currentUser.Id;
 
             await _productService.CreateAsync(model);
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Update([FromForm] ProductParamModel model)
+        {
+            model.UserId = _currentUser.Id;
+
+            await _productService.UpdateAsync();
             return Ok();
         }
 

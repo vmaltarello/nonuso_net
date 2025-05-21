@@ -1,4 +1,5 @@
-﻿using Nonuso.Application.IServices;
+﻿using AutoMapper;
+using Nonuso.Application.IServices;
 using Nonuso.Common;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
@@ -7,18 +8,17 @@ using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
 {
-    internal class ProductRequestService(IProductRepository productRepository,
-        IProductRequestRepository productRequestRepository) : IProductRequestService
+    internal class ProductRequestService(
+        IMapper mapper,
+        IProductRepository productRepository,
+        IProductRequestRepository productRequestRepository,
+        IConversationRepository conversationRepository) : IProductRequestService
     {
+        readonly IMapper _mapper = mapper;
         readonly IProductRepository _productRepository = productRepository;
         readonly IProductRequestRepository _productRequestRepository = productRequestRepository;
+        readonly IConversationRepository _conversationRepository = conversationRepository;
 
-        public async Task<ProductRequestResultModel?> GetActiveAsync(Guid userId, Guid productId)
-        {
-            var result = await _productRequestRepository.GetActiveAsync(userId, productId);
-
-            return result?.To<ProductRequestResultModel>();
-        }
 
         public async Task CreateAsync(ProductRequestParamModel model)
         {
@@ -28,8 +28,9 @@ namespace Nonuso.Application.Services
             var productRequest = model.To<ProductRequest>();
 
             productRequest.RequestedId = product.UserId;
-            productRequest.Conversation = new Conversation
+            var conversation = new Conversation
             {
+                ProductRequest = productRequest,
                 Messages = 
                 [ 
                     new Message()
@@ -52,6 +53,7 @@ namespace Nonuso.Application.Services
             };
 
             await _productRequestRepository.CreateAsync(productRequest);
+            await _conversationRepository.CreateAsync(conversation);
         }
     }
 }

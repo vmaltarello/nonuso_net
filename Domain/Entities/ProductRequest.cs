@@ -32,8 +32,6 @@ namespace Nonuso.Domain.Entities
         [Required]
         public Guid RequestedId { get; set; }
 
-        public Conversation Conversation { get; set; } = null!;
-
         public Guid? ExchangeProductId { get; set; }
 
         [Required]

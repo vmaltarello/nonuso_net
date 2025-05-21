@@ -132,17 +132,6 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         }
 
-        private string FormatSearchQuery(string input)
-        {
-            // Rimuovi caratteri speciali e prepara la query per tsquery
-            var cleanQuery = string.Join(" & ",
-                input.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(term => term.Trim() + ":*")  // Aggiunge il prefisso per la ricerca
-            );
-
-            return cleanQuery;
-        }
-
         public async Task CreateAsync(Product entity)
         {
             _context.Product.Add(entity);

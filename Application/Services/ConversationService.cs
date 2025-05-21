@@ -17,6 +17,13 @@ namespace Nonuso.Application.Services
             var result = await _conversationRepository.GetAllAsync(userId);
 
             return _mapper.Map<ConversationResultModel[]>(result);
-        }    
+        }
+
+        public async Task<ConversationResultModel?> GetActiveAsync(Guid productId, Guid userId)
+        {
+            var result = await _conversationRepository.GetActiveAsync(productId, userId);
+
+            return _mapper.Map<ConversationResultModel?>(result);
+        }
     }
 }

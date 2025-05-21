@@ -10,6 +10,7 @@ namespace Nonuso.Application.IServices
         Task<IEnumerable<ProductResultModel>> GetAllActiveAsync(Guid userId);
         Task<IEnumerable<ProductResultModel>> SearchAsync(ProductFilter filters);
         Task CreateAsync(ProductParamModel model);
+        Task UpdateAsync();
         Task DeleteAsync(Guid id);
     }
 }

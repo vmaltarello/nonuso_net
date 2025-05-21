@@ -23,11 +23,5 @@ namespace Nonuso.Api.Controllers
             await _productRequestService.CreateAsync(model);
             return Ok();
         }
-
-        [HttpGet]
-        public async Task<IActionResult> GetActive([FromQuery] Guid productId)
-        {
-            return Ok(await _productRequestService.GetActiveAsync(_currentUser.Id, productId));
-        }
     }
 }

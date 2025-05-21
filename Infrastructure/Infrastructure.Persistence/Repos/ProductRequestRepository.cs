@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Nonuso.Domain.Entities;
+﻿using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
 
 namespace Nonuso.Infrastructure.Persistence.Repos
@@ -12,14 +11,6 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         {
             _context.ProductRequest.Add(entity);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<ProductRequest?> GetActiveAsync(Guid userId, Guid productId)
-        {
-            return await _context.ProductRequest.Where(x => x.Status == ProductRequestStatus.Pending
-                                               && x.RequesterId == userId
-                                               && x.ProductId == productId)
-                                    .FirstOrDefaultAsync();
         }
     }
 }

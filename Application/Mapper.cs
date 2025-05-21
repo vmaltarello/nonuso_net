@@ -13,8 +13,9 @@ namespace Nonuso.Application
         internal Mapper()
         {
             CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
+            CreateMap<Conversation, ConversationResultModel>();
             CreateMap<User, UserModel>();
-            CreateMap<ProductRequest, ProductRequestModel>();
+            CreateMap<ProductRequest, Messages.Api.ProductRequestModel>();
             CreateMap<ChatModel, ChatResultModel>();
             CreateMap<MessageModel, MessageResultModel>();
 

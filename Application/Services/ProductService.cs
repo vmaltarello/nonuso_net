@@ -80,6 +80,11 @@ namespace Nonuso.Application.Services
             }
         }
 
+        public async Task UpdateAsync()
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task DeleteAsync(Guid id) 
         {
             var entity = await _productRepository.GetByIdAsync(id)

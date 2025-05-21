@@ -29,12 +29,16 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         public async Task<ChatModel?> GetByConversationIdAsync(Guid id, Guid userId)
         {
-            return await _context.ProductRequest.Where(x => x.Conversation.Id == id).Include(x => x.Product)
+            return await _context.Conversation
+                .Where(x => x.ProductRequest != null 
+                            && x.ProductRequest.Product != null 
+                            && x.Id == id)
+                .Include(x => x.ProductRequest).ThenInclude(x => x!.Product)
                 .Select(x => new ChatModel()
                 {
-                    ProductRequest = x,
-                    ChatWithUser = x.RequestedId == userId ? x.RequestedUser! : x.RequesterUser!,
-                    Messages = x.Conversation.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
+                    ProductRequest = x.ProductRequest!,
+                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest!.RequestedUser! : x.ProductRequest!.RequesterUser!,
+                    Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
                     {
                         Id = x.Id,
                         IsMine = x.SenderId == userId,

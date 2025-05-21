@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
 using Nonuso.Domain.Models;
 
@@ -8,22 +9,50 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
+        public async Task CreateAsync(Conversation entity)
+        {
+            _context.Conversation.Add(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<ConversationModel?> GetActiveAsync(Guid productId, Guid userId)
+        {
+            return await _context.Conversation
+               .Where(x => x.ProductRequest != null 
+                           && x.ProductRequest.Product != null
+                           && x.ProductRequest.Product.Id == productId
+                           && (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId))
+               .Include(x => x.ProductRequest).ThenInclude(x => x!.Product)
+               .OrderByDescending(x => x.CreatedAt)
+               .Select(x => new ConversationModel()
+               {
+                   Id = x.Id,
+                   ProductRequest = x.ProductRequest!,
+                   CreatedAt = x.CreatedAt,
+                   LastMessage = x.Messages.First().Content ?? string.Empty,
+                   LastMessageDate = x.Messages.First().CreatedAt,
+                   ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequestedUser! : x.ProductRequest.RequesterUser!
+               })
+               .FirstOrDefaultAsync();
+        }
+
         public async Task<IEnumerable<Domain.Models.ConversationModel>> GetAllAsync(Guid userId)
         {
-
-            return await _context.ProductRequest.Where(x => x.RequesterId == userId || x.RequestedId == userId)
-                .Include(x => x.Product)
-                .OrderByDescending(x => x.Conversation.CreatedAt)
-                .Select(x => new ConversationModel() 
+            return await _context.Conversation
+                .Where(x => x.ProductRequest != null &&
+                            (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId))
+                .Include(x => x.ProductRequest).ThenInclude(x => x!.Product)
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new ConversationModel()
                 {
-                    Id = x.Conversation.Id,
-                    ProductRequest = x,
-                    CreatedAt = x.Conversation.CreatedAt,
-                    LastMessage = x.Conversation.Messages.First().Content ?? string.Empty,
-                    LastMessageDate = x.Conversation.Messages.First().CreatedAt,
-                    ChatWithUser = x.RequestedId == userId ? x.RequestedUser! : x.RequesterUser!
+                    Id = x.Id,
+                    ProductRequest = x.ProductRequest!,
+                    CreatedAt = x.CreatedAt,
+                    LastMessage = x.Messages.First().Content ?? string.Empty,
+                    LastMessageDate = x.Messages.First().CreatedAt,
+                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequestedUser! : x.ProductRequest.RequesterUser!
                 })
-                .ToListAsync();           
+                .ToListAsync();       
         }
     }
 }

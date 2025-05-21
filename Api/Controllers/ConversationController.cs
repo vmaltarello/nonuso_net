@@ -19,5 +19,11 @@ namespace Nonuso.Api.Controllers
         {            
             return Ok(await _conversationService.GetAllAsync(_currentUser.Id));
         }
+
+        [HttpGet("{productId}")]
+        public async Task<IActionResult> GetActive(Guid productId)
+        {
+            return Ok(await _conversationService.GetActiveAsync(productId, _currentUser.Id));
+        }
     }
 }
