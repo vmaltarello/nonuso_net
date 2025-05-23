@@ -1,13 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Nonuso.Domain.Entities;
 
 namespace Nonuso.Infrastructure.Persistence.Configurations
 {
-    internal static class CategoryConfiguration
+    internal class CategoryConfiguration : IEntityTypeConfiguration<Category>
     {
-        internal static void PopulateCategoryTable(ModelBuilder modelBuilder)
+        public void Configure(EntityTypeBuilder<Category> builder)
         {
-            modelBuilder.Entity<Category>().HasData(
+            builder.HasData(
                 new Category { Id = Guid.Parse("F4D0E95E-21B0-4F85-8894-15A09FC7DE6B"), Description = "Abbigliamento e Accessori", DescriptionEN = "Clothing and Accessories" },
                 new Category { Id = Guid.Parse("7624F3A2-39CA-4986-8033-E7E7F1C29003"), Description = "Accessori Auto", DescriptionEN = "Car Accessories" },
                 new Category { Id = Guid.Parse("3FB6FCEE-DAA4-43E0-8CC3-853E64F391B7"), Description = "Accessori Moto", DescriptionEN = "Motorcycle Accessories" },

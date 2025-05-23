@@ -24,6 +24,7 @@ namespace Nonuso.Infrastructure.Persistence
             services.AddScoped<IProductRequestRepository, ProductRequestRepository>();
             services.AddScoped<IConversationRepository, ConversationRepository>();
             services.AddScoped<IChatRepository, ChatRepository>();
+            services.AddScoped<IUserBlockedRepository, UserBlockedRepository>();
 
             return services;
         }

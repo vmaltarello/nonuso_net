@@ -18,10 +18,14 @@ namespace Nonuso.Infrastructure.Persistence
         public DbSet<Conversation> Conversation { get; set; }
         public DbSet<Message> Message { get; set; }
         public DbSet<ConversationInfo> ConversationInfo { get; set; }
+        public DbSet<UserBlock> UserBlock { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.ApplyConfiguration(new RoleConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryConfiguration());
 
             //modelBuilder.Entity<Product>()
             //    .HasOne(x => x.Category)
@@ -63,9 +67,6 @@ namespace Nonuso.Infrastructure.Persistence
              .HasOne(x => x.User)
              .WithMany()
              .HasForeignKey(x => x.UserId);
-
-            CategoryConfiguration.PopulateCategoryTable(modelBuilder);
-            //RoleConfiguration..PopulateCategoryTable(modelBuilder);
 
             //modelBuilder.Entity<Favorite>().HasIndex("OwnerId");
             //modelBuilder.Entity<Product>().HasIndex("OwnerId");

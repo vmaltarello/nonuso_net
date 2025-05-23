@@ -18,6 +18,7 @@ namespace Nonuso.Application
             CreateMap<ProductRequest, Messages.Api.ProductRequestModel>();
             CreateMap<ChatModel, ChatResultModel>();
             CreateMap<MessageModel, MessageResultModel>();
+            CreateMap<Favorite, FavoriteResultModel>().ReverseMap();
 
             CreateMap<ProductDetailModel, ProductDetailResultModel>()
                 .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));

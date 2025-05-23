@@ -50,7 +50,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     CreatedAt = x.CreatedAt,
                     LastMessage = x.Messages.First().Content ?? string.Empty,
                     LastMessageDate = x.Messages.First().CreatedAt,
-                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequestedUser! : x.ProductRequest.RequesterUser!
+                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
                 })
                 .ToListAsync();       
         }

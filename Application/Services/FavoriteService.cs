@@ -1,5 +1,5 @@
-﻿using Nonuso.Application.IServices;
-using Nonuso.Common;
+﻿using AutoMapper;
+using Nonuso.Application.IServices;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
@@ -7,15 +7,18 @@ using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
 {
-    internal class FavoriteService(IFavoriteRepository favoriteRepository) : IFavoriteService
+    internal class FavoriteService(
+        IMapper mapper,
+        IFavoriteRepository favoriteRepository) : IFavoriteService
     {
+        readonly IMapper _mapper = mapper;
         readonly IFavoriteRepository _favoriteRepository = favoriteRepository;
 
         public async Task<IEnumerable<FavoriteResultModel>> GetByUserIdAsync(Guid id)
         {
             var result = await _favoriteRepository.GetByUserIdAsync(id);
 
-            return result.To<FavoriteResultModel[]>();
+            return _mapper.Map<FavoriteResultModel[]>(result);
         }
 
         public async Task CreateAsync(Guid userId, Guid productId)
