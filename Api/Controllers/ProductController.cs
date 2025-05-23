@@ -56,17 +56,7 @@ namespace Nonuso.Api.Controllers
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Update([FromForm] EditProductParamModel model)
-        {
-            // DEBUG: Vediamo cosa arriva
-            Console.WriteLine($"Images count: {model.Images?.Count()}");
-            Console.WriteLine($"ExistingImages count: {model.ExistingImages?.Count()}");
-
-            // Stampa tutti i valori della request
-            foreach (var key in Request.Form.Keys)
-            {
-                Console.WriteLine($"Form key: {key}, Values: [{string.Join(", ", Request.Form[key].ToArray())}]");
-            }
-
+        {           
             model.UserId = _currentUser.Id;
 
             await _productService.UpdateAsync(model);
@@ -77,7 +67,7 @@ namespace Nonuso.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _productService.DeleteAsync(id);
+            await _productService.DeleteAsync(id, _currentUser.Id);
             return NoContent();
         }
     }

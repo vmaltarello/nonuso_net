@@ -18,6 +18,8 @@ namespace Nonuso.Messages.Api
         public required string Description { get; set; }
         public required Guid CategoryId { get; set; }
         public string[] ImagesURL { get; set; } = [];
+        public bool IsEnabled { get; set; } = true;
+
     }
 
     public class ProductParamModel : ProductLocationModel

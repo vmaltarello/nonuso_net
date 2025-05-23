@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FluentValidation;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.Index.HPRtree;
 using Nonuso.Application.IServices;
 using Nonuso.Common;
 using Nonuso.Common.Filters;
@@ -17,12 +18,14 @@ namespace Nonuso.Application.Services
         IMapper mapper,
         IDomainValidatorFactory validatorFactory,
         IS3StorageService storageService,         
-        IProductRepository productRepository) : IProductService
+        IProductRepository productRepository,
+        IProductRequestRepository productRequestRepository) : IProductService
     {
         readonly IMapper _mapper = mapper;
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly IS3StorageService _storageService = storageService;
         readonly IProductRepository _productRepository = productRepository;
+        readonly IProductRequestRepository _productRequestRepository = productRequestRepository;
 
         public async Task<ProductDetailResultModel> GetByIdAsync(Guid id, Guid userId)
         {
@@ -109,10 +112,23 @@ namespace Nonuso.Application.Services
             await _productRepository.UpdateAsync(entity);
         }
 
-        public async Task DeleteAsync(Guid id) 
+        public async Task DeleteAsync(Guid id, Guid userId) 
         {
             var entity = await _productRepository.GetByIdAsync(id)
                 ?? throw new EntityNotFoundException(nameof(Product), id);
+
+            var productRequests = await _productRequestRepository.GetByProductIdAsync(entity.Id, userId);
+
+            if(productRequests.Any())
+            {
+                foreach (var item in productRequests) 
+                {
+                    item.Status = ProductRequestStatus.ProductUnavailable;
+                    item.UpdatedAt = DateTime.UtcNow;
+                }
+
+                await _productRequestRepository.UpdateRangeAsync(productRequests);
+            }
 
             await _productRepository.DeleteAsync(entity);
         }

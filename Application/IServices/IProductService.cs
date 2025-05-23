@@ -11,6 +11,6 @@ namespace Nonuso.Application.IServices
         Task<IEnumerable<ProductResultModel>> SearchAsync(ProductFilter filters);
         Task CreateAsync(ProductParamModel model);
         Task UpdateAsync(EditProductParamModel model);
-        Task DeleteAsync(Guid id);
+        Task DeleteAsync(Guid id, Guid userId);
     }
 }
