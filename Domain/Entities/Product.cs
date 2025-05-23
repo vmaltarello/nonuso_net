@@ -20,7 +20,7 @@ namespace Nonuso.Domain.Entities
         [StringLength(500)]
         public string Description { get; set; } = string.Empty;
 
-        public string ImagesUrl { get; set; } = string.Empty;
+        public string? ImagesUrl { get; set; }
 
         [Required]
         public Guid CategoryId { get; set; }

@@ -20,13 +20,14 @@ namespace Nonuso.Application
             CreateMap<MessageModel, MessageResultModel>();
 
             CreateMap<ProductDetailModel, ProductDetailResultModel>()
-                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
 
+            CreateMap<Product, EditProductParamModel>().ReverseMap();
             CreateMap<Product, ProductResultModel>()
-                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
 
             CreateMap<Product, ProductModel>()
-               .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+               .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
         }
     }
 }

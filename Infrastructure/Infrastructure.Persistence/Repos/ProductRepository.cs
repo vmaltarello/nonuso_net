@@ -26,6 +26,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 Id = id,
                 Title = entity.Title,
                 Description = entity.Description,
+                Location = entity.Location,
                 LocationName = entity.LocationName,
                 CategoryId = entity.CategoryId,
                 CreatedAt = entity.CreatedAt,
@@ -140,6 +141,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         public async Task UpdateAsync(Product entity)
         {
+            entity.UpdatedAt = DateTime.UtcNow;
+
             _context.Product.Update(entity);
             await _context.SaveChangesAsync();
         }
@@ -150,6 +153,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
             _context.Favorite.RemoveRange(favoritesToDelete);
 
+            entity.UpdatedAt = DateTime.UtcNow;
             entity.IsEnabled = false;
             _context.Product.Update(entity);
 

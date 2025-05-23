@@ -29,6 +29,17 @@ namespace Nonuso.Messages.Api
         public IEnumerable<IFormFile> Images { get; set; } = [];
     }
 
+    public class EditProductParamModel
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
+        public required Guid CategoryId { get; set; }
+        public IEnumerable<IFormFile> Images { get; set; } = [];
+        public List<string> ExistingImages { get; set; } = [];
+    }
+
     public class ProductResultModel : ProductModel
     {
         public required string LocationName { get; set; }

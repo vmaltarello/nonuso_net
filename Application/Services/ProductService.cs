@@ -80,9 +80,33 @@ namespace Nonuso.Application.Services
             }
         }
 
-        public async Task UpdateAsync()
+        public async Task UpdateAsync(EditProductParamModel model)
         {
-            throw new NotImplementedException();
+            var entity = await _productRepository.GetByIdAsync(model.Id, model.UserId)
+                ?? throw new EntityNotFoundException(nameof(ProductDetailModel), model.Id);
+
+            entity.PopulateWith(model);
+
+            entity.Title = char.ToUpper(entity.Title[0]) + entity.Title[1..];
+            entity.Description = char.ToUpper(entity.Description[0]) + entity.Description[1..];
+
+            _validatorFactory.GetValidator<Product>().ValidateAndThrow(entity);
+
+            entity.ImagesUrl = string.Join(",", await _storageService.RemoveProductImagesAsync(model.ExistingImages, entity.Id));
+
+            if (model.Images.Any())
+            {
+                var uploadedUrls = await _storageService.UploadProductImagesAsync(model.Images, entity.Id);
+
+                var existingUrls = string.IsNullOrEmpty(entity.ImagesUrl)
+                ? []
+                : entity.ImagesUrl.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                existingUrls.AddRange(uploadedUrls);
+                entity.ImagesUrl = string.Join(",", existingUrls);
+            }
+
+            await _productRepository.UpdateAsync(entity);
         }
 
         public async Task DeleteAsync(Guid id) 
