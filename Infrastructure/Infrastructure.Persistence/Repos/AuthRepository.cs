@@ -11,7 +11,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         public async Task<RefreshToken?> GetRefreshTokenByUserIdAsync(Guid id, string? refreshToken = null)
         {
             return await _context.RefreshToken
-                .Where(x => x.UserId == id 
+                .Where(x => x.UserId == id
                             && (refreshToken == null || x.Token == refreshToken)
                             && !x.Revoked)
                 .Include(x => x.User)
@@ -35,13 +35,16 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         public async Task DeleteAsync(User entity)
         {
-            entity.IsEnabled = false;           
+            entity.IsEnabled = false;
             entity.DeletedAt = DateTime.UtcNow;
-            entity.UserName = entity.UserName + "_deleted";
-            entity.Email = entity.Email + "_deleted";
+            entity.UserName += "_deleted";
+            entity.Email += "_deleted";
 
             _context.Users.Update(entity);
-            
+
+            var tokenToRevoke = _context.RefreshToken.Where(x => x.UserId == entity.Id).ExecuteUpdate(x =>
+            x.SetProperty(x => x.Revoked, true));
+
             await _context.SaveChangesAsync();
         }
     }

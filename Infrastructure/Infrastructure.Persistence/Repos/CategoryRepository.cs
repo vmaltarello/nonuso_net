@@ -13,7 +13,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         public async Task<IEnumerable<Category?>> GetAllPopularAsync(Guid? userId = null)
         {
             return await _context.Product
-                  .Where(x => userId == null || x.UserId != userId)
+                  .Where(x => x.IsEnabled && (userId == null || x.UserId != userId))
                   .GroupBy(x => x.CategoryId)
                   .OrderBy(x => x.Count())
                   .Select(x => x.First().Category)

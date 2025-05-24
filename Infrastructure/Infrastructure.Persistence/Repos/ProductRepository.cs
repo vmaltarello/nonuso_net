@@ -47,7 +47,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         public async Task<IEnumerable<Product>> GetAllPopularAsync(Guid? userId = null)
         {
             return await _context.Product
-                .Where(x => userId == null || x.UserId != userId)
+                .Where(x => x.IsEnabled && (userId == null || x.UserId != userId))
                 .Include(x => x.User)
                 .Select(x => new
                 {

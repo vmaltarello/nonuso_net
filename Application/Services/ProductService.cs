@@ -130,6 +130,8 @@ namespace Nonuso.Application.Services
                 await _productRequestRepository.UpdateRangeAsync(productRequests);
             }
 
+            await _storageService.RemoveProductImagesAsync([], entity.Id);
+
             await _productRepository.DeleteAsync(entity);
         }
     }

@@ -22,15 +22,23 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                            && x.ProductRequest.Product != null
                            && x.ProductRequest.Product.Id == productId
                            && (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId))
-               .Include(x => x.ProductRequest).ThenInclude(x => x!.Product)
+               .Include(x => x.ProductRequest).ThenInclude(x => x!.Product).ThenInclude(x => x!.User)
                .OrderByDescending(x => x.CreatedAt)
                .Select(x => new ConversationModel()
                {
                    Id = x.Id,
                    ProductRequest = x.ProductRequest!,
                    CreatedAt = x.CreatedAt,
-                   LastMessage = x.Messages.First().Content ?? string.Empty,
-                   LastMessageDate = x.Messages.First().CreatedAt,                   
+                   LastMessage = x.Messages.OrderByDescending(x => x.CreatedAt).First().Content ?? string.Empty,
+                   LastMessageDate = x.Messages.OrderByDescending(x => x.CreatedAt).First().CreatedAt,
+                   Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
+                   {
+                       Id = x.Id,
+                       IsMine = x.SenderId == userId,
+                       Content = x.Content ?? string.Empty,
+                       IsAttachment = x.IsAttachment,
+                       CreatedAt = x.CreatedAt
+                   }),
                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequestedUser! : x.ProductRequest.RequesterUser!
                })
                .FirstOrDefaultAsync();
