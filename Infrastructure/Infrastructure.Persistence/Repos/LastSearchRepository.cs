@@ -14,9 +14,9 @@ namespace Nonuso.Infrastructure.Persistence.Repos
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<LastSearch>> GetByUserId(Guid id)
+        public async Task<IEnumerable<string>> GetByUserId(Guid id)
         {
-            return await _context.LastSearch.Where(x => x.UserId == id).ToListAsync();
+            return await _context.LastSearch.Where(x => x.UserId == id).Take(3).Select(x => x.Search).ToListAsync();
         }
 
     }

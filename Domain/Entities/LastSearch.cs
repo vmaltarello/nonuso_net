@@ -9,7 +9,6 @@ namespace Nonuso.Domain.Entities
         public Guid UserId { get; set; }
 
         [Required]
-        [MinLength(5)]
         [MaxLength(255)]
         public string Search {  get; set; } = string.Empty;
 

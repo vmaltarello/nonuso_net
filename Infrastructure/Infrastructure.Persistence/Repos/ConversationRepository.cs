@@ -30,7 +30,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                    ProductRequest = x.ProductRequest!,
                    CreatedAt = x.CreatedAt,
                    LastMessage = x.Messages.First().Content ?? string.Empty,
-                   LastMessageDate = x.Messages.First().CreatedAt,
+                   LastMessageDate = x.Messages.First().CreatedAt,                   
                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequestedUser! : x.ProductRequest.RequesterUser!
                })
                .FirstOrDefaultAsync();
@@ -48,8 +48,16 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     Id = x.Id,
                     ProductRequest = x.ProductRequest!,
                     CreatedAt = x.CreatedAt,
-                    LastMessage = x.Messages.First().Content ?? string.Empty,
-                    LastMessageDate = x.Messages.First().CreatedAt,
+                    LastMessage = x.Messages.OrderByDescending(x => x.CreatedAt).First().Content ?? string.Empty,
+                    LastMessageDate = x.Messages.OrderByDescending(x => x.CreatedAt).First().CreatedAt,
+                    Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
+                    {
+                        Id = x.Id,
+                        IsMine = x.SenderId == userId,
+                        Content = x.Content ?? string.Empty,
+                        IsAttachment = x.IsAttachment,
+                        CreatedAt = x.CreatedAt
+                    }),
                     ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
                 })
                 .ToListAsync();       

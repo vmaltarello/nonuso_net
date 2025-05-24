@@ -1,8 +1,6 @@
 ﻿using Nonuso.Application.IServices;
-using Nonuso.Common;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
-using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
 {
@@ -16,11 +14,9 @@ namespace Nonuso.Application.Services
             await _lastSearchRepository.CreateAsync(entity);
         }
 
-        public async Task<IEnumerable<LastSearchResultModel>> GetByUserId(Guid id)
+        public async Task<IEnumerable<string>> GetByUserId(Guid id)
         {
-            var result = await _lastSearchRepository.GetByUserId(id);
-
-            return result.To<LastSearchResultModel[]>();
+            return await _lastSearchRepository.GetByUserId(id);
         }
     }
 }

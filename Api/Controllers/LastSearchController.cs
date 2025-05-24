@@ -15,7 +15,7 @@ namespace Nonuso.Api.Controllers
         private readonly CurrentUser _currentUser = currentUser;
 
         [HttpPost]
-        public async Task<IActionResult> Create(string search)
+        public async Task<IActionResult> Create([FromQuery] string search)
         {
             await _lastSearchService.CreateAsync(_currentUser.Id, search);
             return Created();
