@@ -12,23 +12,31 @@ namespace Nonuso.Application
 
         internal Mapper()
         {
-            CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
-            CreateMap<Conversation, ConversationResultModel>();
-            CreateMap<User, UserModel>();
-            CreateMap<ProductRequest, Messages.Api.ProductRequestModel>();
-            CreateMap<ChatModel, ChatResultModel>();
-            CreateMap<MessageModel, MessageResultModel>();
-            CreateMap<Favorite, FavoriteResultModel>().ReverseMap();
+            #region PRODUCT
 
             CreateMap<ProductDetailModel, ProductDetailResultModel>()
-                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+               .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)))
+               .ReverseMap();
 
             CreateMap<Product, EditProductParamModel>().ReverseMap();
+
             CreateMap<Product, ProductResultModel>()
-                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+                .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)))
+                .ReverseMap();
 
             CreateMap<Product, ProductModel>()
-               .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)));
+               .ForMember(dest => dest.ImagesURL, static opt => opt.MapFrom(x => x.ImagesUrl == null ? null : x.ImagesUrl.Split(ImageUrlSplitDelimiter, StringSplitOptions.RemoveEmptyEntries)))
+               .ReverseMap();
+
+            #endregion
+            CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
+            CreateMap<Conversation, ConversationResultModel>();
+            CreateMap<User, UserModel>().ReverseMap();
+            CreateMap<ProductRequest, Messages.Api.ProductRequestModel>();
+            CreateMap<ChatModel, ChatResultModel>();
+            CreateMap<MessageModel, ChatResultModel>();
+            CreateMap<MessageModel, MessageResultModel>();
+            CreateMap<Favorite, FavoriteResultModel>().ReverseMap();           
         }
     }
 }

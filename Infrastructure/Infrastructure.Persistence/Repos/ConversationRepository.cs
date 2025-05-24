@@ -41,7 +41,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
             return await _context.Conversation
                 .Where(x => x.ProductRequest != null &&
                             (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId))
-                .Include(x => x.ProductRequest).ThenInclude(x => x!.Product)
+                .Include(x => x.ProductRequest).ThenInclude(x => x!.Product).ThenInclude(x => x!.User)
                 .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new ConversationModel()
                 {

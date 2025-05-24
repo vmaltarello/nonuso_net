@@ -13,7 +13,7 @@ namespace Nonuso.Messages.Api
     public class ProductModel : IModel
     {
         public Guid Id { get; set; }
-        public Guid UserId { get; set; }
+        public UserModel User { get; set; } = null!;
         public required string Title { get; set; }
         public required string Description { get; set; }
         public required Guid CategoryId { get; set; }
@@ -51,7 +51,6 @@ namespace Nonuso.Messages.Api
 
     public class ProductDetailResultModel : ProductResultModel
     {
-        public string UserName { get; set; } = null!;
         public bool IsMyFavorite { get; set; } = false;
         public bool IsMyProduct { get; set; } = false;
         public int FavoriteCount { get; set; } = 0;

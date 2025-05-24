@@ -11,9 +11,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         public async Task<IEnumerable<Favorite>> GetByUserIdAsync(Guid id)
         {
             return await _context.Favorite
-                            .Where(x => x.UserId == id)
-                            .Include(x => x.User)
-                            .Include(x => x.Product)
+                            .Where(x => x.UserId == id)                            
+                            .Include(x => x.Product).ThenInclude(x => x!.User)
                             .ToListAsync();
         }
 

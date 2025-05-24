@@ -10,8 +10,9 @@ namespace Nonuso.Messages.Api
 
     }
 
-    public class FavoriteResultModel : FavoriteModel
+    public class FavoriteResultModel
     {
+        public Guid Id { get; set; }
         public required ProductResultModel Product { get; set; }
     }
 }

@@ -34,7 +34,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 IsMyFavorite = isMyFavorite,
                 FavoriteCount = favoritesCount,
                 ImagesUrl = entity.ImagesUrl,
-                UserName = entity.User.UserName!,
+                User = entity.User,
                 IsMyProduct = entity.UserId == userId
             };
         }
