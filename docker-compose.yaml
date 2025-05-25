@@ -27,8 +27,6 @@ services:
       - POSTGRES_DB=myappdb
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
       - nonuso-network
     restart: unless-stopped
@@ -39,8 +37,6 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
-    ports:
-      - "6379:6379"
     networks:
       - nonuso-network
     restart: unless-stopped
