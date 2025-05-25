@@ -9,7 +9,7 @@ services:
       - "443:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=nonusodb;Username=postgres;Password=postgres
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=nonuso;Username=postgres;Password=postgres
       - ConnectionStrings__Redis=redis:6379
     depends_on:
       - postgres
@@ -22,9 +22,9 @@ services:
     image: postgres:15-alpine
     container_name: nonuso-postgres
     environment:
-      - POSTGRES_USER=myappuser
-      - POSTGRES_PASSWORD=mypassword123!
-      - POSTGRES_DB=myappdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=nonuso
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
