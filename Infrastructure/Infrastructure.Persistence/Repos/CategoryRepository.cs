@@ -8,7 +8,10 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
-        public async Task<IEnumerable<Category>> GetAllAsync() => await _context.Category.OrderBy(x => x.Description).ToListAsync();
+        public async Task<IEnumerable<Category>> GetAllAsync()
+        {
+            return await _context.Category.OrderBy(x => x.Description).ToListAsync();
+        }
 
         public async Task<IEnumerable<Category?>> GetAllPopularAsync(Guid? userId = null)
         {
