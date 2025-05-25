@@ -50,7 +50,7 @@ namespace Nonuso.Api.Extensions
                 };
             });
 
-            services.AddSignalR();
+            services.AddSignalR().AddStackExchangeRedis("localhost:6379");
 
             return services;
         }

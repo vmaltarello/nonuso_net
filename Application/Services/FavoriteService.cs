@@ -12,7 +12,7 @@ namespace Nonuso.Application.Services
         IFavoriteRepository favoriteRepository) : IFavoriteService
     {
         readonly IMapper _mapper = mapper;
-        readonly IFavoriteRepository _favoriteRepository = favoriteRepository;
+        readonly IFavoriteRepository _favoriteRepository = favoriteRepository;       
 
         public async Task<IEnumerable<FavoriteResultModel>> GetByUserIdAsync(Guid id)
         {
@@ -28,10 +28,10 @@ namespace Nonuso.Application.Services
             await _favoriteRepository.CreateAsync(entity);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid userId, Guid productId)
         {
-            var entity = await _favoriteRepository.GetByIdAsync(id)
-                ?? throw new EntityNotFoundException(nameof(Favorite), id);
+            var entity = await _favoriteRepository.GetByUserAndProductIdAsync(userId, productId)
+                ?? throw new EntityNotFoundException(nameof(Favorite), productId);
 
             await _favoriteRepository.DeleteAsync(entity);
         }

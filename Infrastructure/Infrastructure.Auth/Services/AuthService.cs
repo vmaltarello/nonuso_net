@@ -23,14 +23,14 @@ namespace Nonuso.Infrastructure.Auth.Services
         UserManager<User> userManager, 
         SignInManager<User> signInManager, 
         IAuthRepository authRepository,
-        IOneSignalService oneSignalService,
+        INotificationService oneSignalService,
         IConfiguration configuration) : IAuthService
     {
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly UserManager<User> _userManager = userManager;
         readonly SignInManager<User> _signInManager = signInManager;
         readonly IAuthRepository _authRepository = authRepository;
-        readonly IOneSignalService _oneSignalService = oneSignalService;
+        readonly INotificationService _oneSignalService = oneSignalService;
         readonly IConfiguration _configuration = configuration;
 
         public async Task<UserResultModel> GetCurrentUserAsync(Guid id)

@@ -1,30 +1,35 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Nonuso.Application.IServices;
+using Nonuso.Domain.Entities;
+using Nonuso.Messages.Api;
 using System.Net.Http.Headers;
 using System.Text;
 namespace Nonuso.Infrastructure.Notification.Services
 {
-    internal class OneSignalService : IOneSignalService
+    internal class NotificationService : INotificationService
     {
         readonly HttpClient _httpClient;
         readonly IConfiguration _configuration;
 
-        public OneSignalService(HttpClient httpClient, IConfiguration configuration)
+        private readonly string _appId;
+        private readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
+
+        public NotificationService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _configuration["OneSignal:RestApiKey"]);
-
+            _appId = _configuration["OneSignal:AppId"]!;
         }
 
-        public async Task SendConfirmEmailAsync(Domain.Entities.User user, string tokenConfirmEmail)
+        public async Task SendConfirmEmailAsync(User user, string tokenConfirmEmail)
         {
             var obj = new
             {
-                app_id = _configuration["OneSignal:AppId"],
+                app_id = _appId,
                 template_id = _configuration["OneSignal:Template:ConfirmEmailTemplateId"],
                 include_unsubscribed = true,
                 target_channel = "email",
@@ -39,7 +44,24 @@ namespace Nonuso.Infrastructure.Notification.Services
 
             var json = JsonConvert.SerializeObject(obj);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(new Uri("https://onesignal.com/api/v1/notifications"), content);
+            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), content);
+        }
+
+        public async Task SendPushNotificationAsync(PusNotificationParamModel model)
+        {
+            var payload = new
+            {
+                app_id = _appId,
+                include_aliases = new { external_id = model.UserId.ToString() },
+                headings = new { en = $"{model.UserName}" },
+                contents = new { en = model.Content },
+                target_channel = "push",
+                data = new { requestId = model.ProductRequestId }
+            };
+
+            var json = JsonConvert.SerializeObject(payload);
+            var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
+            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
         }
     }
 }

@@ -28,10 +28,10 @@ namespace Nonuso.Api.Controllers
             return Created();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpDelete("{productId}")]
+        public async Task<IActionResult> Delete(Guid productId)
         {
-            await _favoriteService.DeleteAsync(id);
+            await _favoriteService.DeleteAsync(_currentUser.Id, productId);
             return NoContent();
         }
     }

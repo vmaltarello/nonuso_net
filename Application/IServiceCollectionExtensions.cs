@@ -25,6 +25,7 @@ namespace Nonuso.Application
             services.AddScoped<IConversationService, ConversationService>();
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IUserBlockedService, UserBlockedService>();
+            services.AddScoped<IPresenceService, PresenceService>();
 
             return services;
         }

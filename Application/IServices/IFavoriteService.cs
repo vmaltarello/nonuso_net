@@ -6,6 +6,6 @@ namespace Nonuso.Application.IServices
     {
         Task<IEnumerable<FavoriteResultModel>> GetByUserIdAsync(Guid id);
         Task CreateAsync(Guid userId, Guid productId);
-        Task DeleteAsync(Guid id);
+        Task DeleteAsync(Guid userId, Guid productId);
     }
 }

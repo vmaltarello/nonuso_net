@@ -5,7 +5,7 @@ using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
 {
-    public class CategoryService(ICategoryRepository categoryRepository) : ICategoryService
+    internal class CategoryService(ICategoryRepository categoryRepository) : ICategoryService
     {
         readonly ICategoryRepository _categoryRepository = categoryRepository;
 

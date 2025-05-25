@@ -7,6 +7,7 @@ using Nonuso.Domain;
 using Nonuso.Infrastructure.Auth;
 using Nonuso.Infrastructure.Notification;
 using Nonuso.Infrastructure.Persistence;
+using Nonuso.Infrastructure.Redis;
 using Nonuso.Infrastructure.Storage;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -30,12 +31,14 @@ builder.Services.AddInfrastructurePersistence(builder.Configuration);
 builder.Services.AddInfrastructureAuth(builder.Configuration);
 builder.Services.AddInfrastructureS3Storage(builder.Configuration);
 builder.Services.AddInfrastructureNotification();
+builder.Services.AddInfrastructureRedis();
 builder.Services.AddApplication();
 builder.Services.AddValidators();
 
 var app = builder.Build();
 
 app.MapHub<ChatHub>("/chatHub").RequireAuthorization();
+app.MapHub<PresenceHub>("/presenceHub").RequireAuthorization();
 
 app.SetupSwagger();
 

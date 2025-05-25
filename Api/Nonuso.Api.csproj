@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -24,6 +25,7 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.Auth\Nonuso.Infrastructure.Auth.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.Email\Nonuso.Infrastructure.Notification.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.Persistence\Nonuso.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.Redis\Nonuso.Infrastructure.Redis.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.Storage\Nonuso.Infrastructure.Storage.csproj" />
     <ProjectReference Include="..\Messages\Nonuso.Messages.csproj" />
   </ItemGroup>

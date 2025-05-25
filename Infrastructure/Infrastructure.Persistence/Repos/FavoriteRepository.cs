@@ -8,6 +8,13 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
+        public async Task<Favorite?> GetByUserAndProductIdAsync(Guid userId, Guid productId)
+        {
+            return await _context.Favorite
+                            .Where(x => x.UserId == userId && x.ProductId == productId)
+                            .FirstOrDefaultAsync();
+        }
+
         public async Task<IEnumerable<Favorite>> GetByUserIdAsync(Guid id)
         {
             return await _context.Favorite
