@@ -19,7 +19,7 @@ COPY ["Messages/Nonuso.Messages.csproj", "Messages/"]
 COPY ["Infrastructure/Infrastructure.Auth/Nonuso.Infrastructure.Auth.csproj", "Infrastructure/Infrastructure.Auth/"]
 COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj", "Infrastructure/Infrastructure.Persistence/"]
 COPY ["Infrastructure/Infrastructure.Storage/Nonuso.Infrastructure.Storage.csproj", "Infrastructure/Infrastructure.Storage/"]
-COPY ["Infrastructure/Infrastructure.Email/Nonuso.Infrastructure.Email.csproj", "Infrastructure/Infrastructure.Email/"]
+COPY ["Infrastructure/Infrastructure.Notification/Nonuso.Infrastructure.Notification.csproj", "Infrastructure/Infrastructure.Notification/"]
 COPY ["Infrastructure/Infrastructure.Redis/Nonuso.Infrastructure.Redis.csproj", "Infrastructure/Infrastructure.Redis/"]
 
 RUN dotnet restore "Api/Nonuso.Api.csproj"
