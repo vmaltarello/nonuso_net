@@ -31,7 +31,7 @@ builder.Services.AddInfrastructurePersistence(builder.Configuration);
 builder.Services.AddInfrastructureAuth(builder.Configuration);
 builder.Services.AddInfrastructureS3Storage(builder.Configuration);
 builder.Services.AddInfrastructureNotification();
-builder.Services.AddInfrastructureRedis();
+builder.Services.AddInfrastructureRedis(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddValidators();
 
