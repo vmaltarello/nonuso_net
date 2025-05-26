@@ -40,6 +40,21 @@ services:
     networks:
       - nonuso-network
     restart: unless-stopped
+  
+  migration:
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    working_dir: /app
+    volumes:
+      - ./publish:/app
+    networks:
+      - nonuso-network
+    entrypoint: []
+    command: >
+      dotnet tool install --global dotnet-ef --version 9.0.0 &&
+      export PATH="$PATH:/root/.dotnet/tools" &&
+      dotnet ef database update
+      --project ./Nonuso.Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj
+      --startup-project ./Api/Nonuso.Api.csproj
 
 volumes:
   postgres-data:
