@@ -52,19 +52,14 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command: >
       "echo 'Installazione dotnet-ef...' &&
-       dotnet tool install --global dotnet-ef --version 9.0.0 &&
-       export PATH=$PATH:/root/.dotnet/tools &&
-       echo 'Compilazione progetto di persistenza...' &&
-       dotnet build Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj &&
-       echo 'Esecuzione migrazioni...' &&
-       dotnet ef database update
-         --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj
-         --startup-project Api/Nonuso.Api.csproj
-         --no-build &&
-       echo 'Stato migrazioni:' &&
-       dotnet ef migrations list
-         --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj
-         --no-build"
+     dotnet tool install --global dotnet-ef --version 9.0.0 &&
+     export PATH=$PATH:/root/.dotnet/tools &&
+     echo 'Compilazione progetto di persistenza...' &&
+     dotnet build Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj &&
+     echo 'Esecuzione migrazioni...' &&
+     dotnet ef database update --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --startup-project Api/Nonuso.Api.csproj --no-build &&
+     echo 'Stato migrazioni:' &&
+     dotnet ef migrations list --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --no-build"
 
 volumes:
   postgres-data:
