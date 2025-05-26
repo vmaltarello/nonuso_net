@@ -52,11 +52,4 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/nonuso-net
-            docker run --rm \
-              -v $(pwd):/app \
-              -w /app \
-              mcr.microsoft.com/dotnet/sdk:8.0 \
-              dotnet ef database update \ 
-                --project ./Nonuso.Infrastructure/Nonuso.Infrastructure.csproj \
-                --startup-project ./Nonuso.Api/Nonuso.Api.csproj
-          
+            docker compose run --rm migration
