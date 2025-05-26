@@ -49,6 +49,8 @@ services:
     - ./:/src
    networks:
     - nonuso-network
+   environment:
+    - ASPNETCORE_ENVIRONMENT=Production
    entrypoint: ["/bin/bash", "-c"]
    command: >
     echo 'Installazione dotnet-ef...' &&
