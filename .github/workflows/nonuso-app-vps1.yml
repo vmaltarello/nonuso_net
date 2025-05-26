@@ -41,5 +41,17 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/nonuso-net
+
+            # Ferma i container attivi
             docker compose down
+
+            # Esegui migration con container dotnet SDK
+            docker run --rm \
+              --network nonuso-net_nonuso-network \
+              -v $PWD:/src \
+              -w /src \
+              mcr.microsoft.com/dotnet/sdk:9.0 \
+              /bin/bash -c "dotnet tool install -g dotnet-ef --version 9.0.0 && export PATH=\"$PATH:/root/.dotnet/tools\" && dotnet restore Api/Nonuso.Api.csproj && dotnet ef database update --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --startup-project Api/Nonuso.Api.csproj"
+
+            # Avvia i container con la nuova build
             docker compose up -d --build
