@@ -43,15 +43,28 @@ services:
   
   migration:
     image: mcr.microsoft.com/dotnet/sdk:9.0
+    container_name: nonuso-migration
     working_dir: /app
     volumes:
-      - ./:/app
+      - ./:/src
     networks:
       - nonuso-network
+    entrypoint: ["/bin/bash", "-c"]
     command: >
-      /bin/bash -c "
-      dotnet tool install --global dotnet-ef --version 9.0.0 && export PATH="$PATH:/root/.dotnet/tools" &&
-      dotnet ef database update --project ./Nonuso.Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --startup-project ./Api/Nonuso.Api.csproj"
+      "echo 'Installazione dotnet-ef...' &&
+       dotnet tool install --global dotnet-ef --version 9.0.0 &&
+       export PATH=$PATH:/root/.dotnet/tools &&
+       echo 'Compilazione progetto di persistenza...' &&
+       dotnet build Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj &&
+       echo 'Esecuzione migrazioni...' &&
+       dotnet ef database update
+         --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj
+         --startup-project Api/Nonuso.Api.csproj
+         --no-build &&
+       echo 'Stato migrazioni:' &&
+       dotnet ef migrations list
+         --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj
+         --no-build"
 
 volumes:
   postgres-data:
