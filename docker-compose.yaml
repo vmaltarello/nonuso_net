@@ -16,11 +16,12 @@ services:
       - nonuso-network
     restart: unless-stopped
     command: >
-     /bin/bash -c "
-     echo 'Applying EF Core migrations...' &&
-     dotnet ef database update --project /app/Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --startup-project /app/Nonuso.Api.dll --no-build &&
-     echo 'Starting API...' &&
-     dotnet Nonuso.Api.dll"
+      /bin/bash -c "
+        echo '🔄 Applying EF Core migrations...' &&
+        dotnet ef database update --project /app/Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --startup-project /app/Nonuso.Api.dll --no-build &&
+        echo '🚀 Starting API...' &&
+        dotnet Nonuso.Api.dll
+      "
 
   postgres:
     image: postgis/postgis:16-3.4
@@ -46,7 +47,6 @@ services:
     networks:
       - nonuso-network
     restart: unless-stopped
-  
 
 volumes:
   postgres-data:
