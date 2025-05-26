@@ -42,5 +42,4 @@ RUN dotnet tool install -g dotnet-ef --version 9.0.0
 
 COPY --from=publish /app/publish .
 
-# Default entrypoint (can be overridden via docker-compose.yml)
-ENTRYPOINT ["/bin/bash", "-c", "dotnet ef database update --project Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persistence.csproj --startup-project Api/Nonuso.Api.csproj --no-build && dotnet Nonuso.Api.dll"]
+ENTRYPOINT ["dotnet", "Nonuso.Api.dll"]
