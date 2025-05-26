@@ -43,13 +43,3 @@ jobs:
             cd /opt/nonuso-net
             docker compose down
             docker compose up -d --build
-            
-      - name: Run EF migrations
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/nonuso-net
-            docker compose run --rm migration
