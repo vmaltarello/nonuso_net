@@ -53,7 +53,7 @@ namespace Nonuso.Infrastructure.Auth
                     OnChallenge = context =>
                     {
                         context.HandleResponse();
-                        throw new UnauthorizedException();
+                        throw new AuthUnauthorizedException();
                     }
                 };
             });

@@ -7,7 +7,7 @@ namespace Nonuso.Application.IServices
         Task<UserResultModel> GetCurrentUserAsync(Guid id);
         Task<UserResultModel> AuthWithGoogleAsync(string idToken);
         Task SignUpAsync(UserSignUpParamModel model);
-        Task<UserResultModel?> SignInAsync(UserSignInParamModel model);
+        Task<UserResultModel> SignInAsync(UserSignInParamModel model);
         Task SignOutAsync(Guid id);
         Task DeleteAsync(Guid id);
         Task ChangePasswordAsync(string password, Guid userId);

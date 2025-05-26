@@ -32,6 +32,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         readonly IAuthRepository _authRepository = authRepository;
         readonly INotificationService _oneSignalService = oneSignalService;
         readonly IConfiguration _configuration = configuration;
+        readonly string _wrongCredentialMessage = "wrongCredential";
 
         public async Task<UserResultModel> GetCurrentUserAsync(Guid id)
         {
@@ -103,7 +104,7 @@ namespace Nonuso.Infrastructure.Auth.Services
             }
         }
 
-        public async Task<UserResultModel?> SignInAsync(UserSignInParamModel model)
+        public async Task<UserResultModel> SignInAsync(UserSignInParamModel model)
         {
             var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false);
 
@@ -113,7 +114,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
                 if (user != null)
                 {
-                    if (!user.EmailConfirmed || !user.IsEnabled) return null;
+                    if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
 
                     user.LastSignInAt = DateTime.UtcNow;
                     await _userManager.UpdateAsync(user);
@@ -122,7 +123,7 @@ namespace Nonuso.Infrastructure.Auth.Services
                 }
             }
 
-            return null;    
+            throw new AuthWrongCredentialException(_wrongCredentialMessage); ;    
         }
 
         public async Task SignOutAsync(Guid id)
@@ -171,7 +172,7 @@ namespace Nonuso.Infrastructure.Auth.Services
             var storedToken = await _authRepository.GetRefreshTokenByUserIdAsync(model.UserId, model.RefreshToken);
 
             if (storedToken == null || storedToken.ExpirationDate < DateTime.UtcNow)
-                throw new UnauthorizedException();
+                throw new AuthUnauthorizedException();
 
             await _authRepository.RevokeRefreshTokenAsync(storedToken);
 
