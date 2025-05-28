@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Nonuso.Application.IServices;
 using Nonuso.Domain.Entities;
+using Nonuso.Infrastructure.Secret;
 using Nonuso.Messages.Api;
 using System.Net.Http.Headers;
 using System.Text;
@@ -11,18 +12,19 @@ namespace Nonuso.Infrastructure.Notification.Services
     {
         readonly HttpClient _httpClient;
         readonly IConfiguration _configuration;
-
         private readonly string _appId;
         private readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
 
-        public NotificationService(HttpClient httpClient, IConfiguration configuration)
+        public NotificationService(HttpClient httpClient,
+            ISecretManager secretManager,
+            IConfiguration configuration)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _configuration["OneSignal:RestApiKey"]);
-            _appId = _configuration["OneSignal:AppId"]!;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", secretManager.GetOneSignalSettings().RestApiKey);
+            _appId = secretManager.GetOneSignalSettings().AppId;
         }
 
         public async Task SendConfirmEmailAsync(User user, string tokenConfirmEmail)

@@ -11,7 +11,7 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDatabase : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,8 +38,10 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     AvatarURL = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     LastSignInAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -254,7 +256,7 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ImagesUrl = table.Column<string>(type: "text", nullable: false),
+                    ImagesUrl = table.Column<string>(type: "text", nullable: true),
                     CategoryId = table.Column<Guid>(type: "uuid", nullable: false),
                     Location = table.Column<Point>(type: "geometry", nullable: false),
                     LocationName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -425,6 +427,50 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "UserBlock",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BlockerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BlockedId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Reason = table.Column<int>(type: "integer", nullable: false),
+                    AdditionalInfo = table.Column<string>(type: "text", nullable: true),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserBlock", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserBlock_AspNetUsers_BlockedId",
+                        column: x => x.BlockedId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserBlock_AspNetUsers_BlockerId",
+                        column: x => x.BlockerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserBlock_Conversation_ConversationId",
+                        column: x => x.ConversationId,
+                        principalTable: "Conversation",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { new Guid("8821f3d9-fe96-4404-9c2f-8830a043a931"), "65281764-0a8c-4eac-892e-d5f0bf888470", "User", "USER" },
+                    { new Guid("9302b5a3-d93b-4152-bd75-9f9ae7e9ff83"), "8ee32c87-ab72-4a0e-b7aa-e7872fa38e64", "Business", "BUSINESS" },
+                    { new Guid("aa5334f3-837d-4f65-9ecc-8e471def97e6"), "365ac856-70d5-461d-8c39-a69654e2cfc7", "Admin", "ADMIN" }
+                });
+
             migrationBuilder.InsertData(
                 table: "Category",
                 columns: new[] { "Id", "Description", "DescriptionEN" },
@@ -499,8 +545,7 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Conversation_ProductRequestId",
                 table: "Conversation",
-                column: "ProductRequestId",
-                unique: true);
+                column: "ProductRequestId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ConversationInfo_ConversationId",
@@ -588,6 +633,21 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 name: "IX_RefreshToken_UserId",
                 table: "RefreshToken",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserBlock_BlockedId",
+                table: "UserBlock",
+                column: "BlockedId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserBlock_BlockerId",
+                table: "UserBlock",
+                column: "BlockerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserBlock_ConversationId",
+                table: "UserBlock",
+                column: "ConversationId");
         }
 
         /// <inheritdoc />
@@ -625,6 +685,9 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
+
+            migrationBuilder.DropTable(
+                name: "UserBlock");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

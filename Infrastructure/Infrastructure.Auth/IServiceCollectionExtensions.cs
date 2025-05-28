@@ -8,13 +8,15 @@ using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Infrastructure.Auth.Services;
 using Nonuso.Infrastructure.Persistence;
+using Nonuso.Infrastructure.Secret;
 using System.Text;
 
 namespace Nonuso.Infrastructure.Auth
 {
     public static partial class IServiceCollectionExtensions
     {
-        public static IServiceCollection AddInfrastructureAuth(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddInfrastructureAuth(this IServiceCollection services,
+            ISecretManager secretManager, IConfiguration configuration)
         {
             services.AddIdentity<User, IdentityRole<Guid>>(opt =>
             {
@@ -45,7 +47,7 @@ namespace Nonuso.Infrastructure.Auth
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = configuration["Jwt:Issuer"],
                     ValidAudience = configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretManager.GetJwtSecret()))
                 };
 
                 options.Events = new JwtBearerEvents

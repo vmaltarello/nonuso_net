@@ -1,17 +1,15 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Nonuso.Application.IServices;
+using Nonuso.Infrastructure.Secret;
 
 namespace Nonuso.Infrastructure.Storage.Services
 {
-    internal class S3StorageService(IAmazonS3 s3Client, IConfiguration configuration) : IS3StorageService
+    internal class S3StorageService(IAmazonS3 s3Client, ISecretManager secretManager) : IS3StorageService
     {
         readonly IAmazonS3 _s3Client = s3Client;
-        readonly IConfiguration _configuration = configuration;
-        readonly string _bucketName = configuration["S3HetznerStorage:BucketName"]!;
-
+        readonly ISecretManager _secretManager = secretManager;
 
         public async Task<IEnumerable<string>> UploadProductImagesAsync(IEnumerable<IFormFile> images, Guid productId)
         {
@@ -26,7 +24,7 @@ namespace Nonuso.Infrastructure.Storage.Services
                 using var stream = image.OpenReadStream();
                 var putRequest = new PutObjectRequest
                 {
-                    BucketName = _bucketName,
+                    BucketName = _secretManager.GetS3Settings().BucketName,
                     Key = fileName,
                     InputStream = stream,
                     ContentType = image.ContentType,
@@ -36,7 +34,7 @@ namespace Nonuso.Infrastructure.Storage.Services
 
                 await _s3Client.PutObjectAsync(putRequest);
 
-                var fileUrl = $"https://{_bucketName}.nbg1.your-objectstorage.com/{fileName}";
+                var fileUrl = $"https://{_secretManager.GetS3Settings().BucketName}.nbg1.your-objectstorage.com/{fileName}";
                 uploadedUrls.Add(fileUrl);
             }
 
@@ -58,7 +56,7 @@ namespace Nonuso.Infrastructure.Storage.Services
                 var fileName = new Uri(imageUrl).Segments.Last();
                 var deleteRequest = new DeleteObjectRequest
                 {
-                    BucketName = _bucketName,
+                    BucketName = _secretManager.GetS3Settings().BucketName,
                     Key = fileName
                 };
 
@@ -84,20 +82,20 @@ namespace Nonuso.Infrastructure.Storage.Services
         {
             var listRequest = new ListObjectsV2Request
             {
-                BucketName = _bucketName,
+                BucketName = _secretManager.GetS3Settings().BucketName,
                 Prefix = productId.ToString()
             };
 
             var existingImages = new List<string>();
             ListObjectsV2Response response;
 
-                response = await _s3Client.ListObjectsV2Async(listRequest);
+            response = await _s3Client.ListObjectsV2Async(listRequest);
 
             if (response != null && response.S3Objects != null)
             {
                 foreach (var obj in response.S3Objects)
                 {
-                    var fileUrl = $"https://{_bucketName}.nbg1.your-objectstorage.com/{obj.Key}";
+                    var fileUrl = $"https://{_secretManager.GetS3Settings().BucketName}.nbg1.your-objectstorage.com/{obj.Key}";
                     existingImages.Add(fileUrl);
                 }
             }

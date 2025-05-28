@@ -1,18 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nonuso.Domain.IRepos;
 using Nonuso.Infrastructure.Persistence.Repos;
+using Nonuso.Infrastructure.Secret;
 
 namespace Nonuso.Infrastructure.Persistence
 {
     public static partial class IServiceCollectionExtensions
     {
-        public static IServiceCollection AddInfrastructurePersistence(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddInfrastructurePersistence(this IServiceCollection services, ISecretManager secretManager)
         {
+            var connectionString = secretManager.GetConnectionString("dbConnection");
+
             services.AddDbContext<NonusoDbContext>(options =>
                 options
-                    .UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions => npgsqlOptions.UseNetTopologySuite())
+                    .UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite())
                     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking),
                 ServiceLifetime.Scoped);
 

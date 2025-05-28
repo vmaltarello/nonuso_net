@@ -1,10 +1,12 @@
 ﻿using Microsoft.OpenApi.Models;
+using Nonuso.Infrastructure.Secret;
 
 namespace Nonuso.Api.Extensions
 {
     public static class IServiceCollectionExtensions
     {
-        public static IServiceCollection AddSwagger(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddSwagger(this IServiceCollection services, 
+            ISecretManager secretManager, IConfiguration configuration)
         {
             services.AddSwaggerGen(options =>
             {
@@ -50,7 +52,7 @@ namespace Nonuso.Api.Extensions
                 };
             });
 
-            services.AddSignalR().AddStackExchangeRedis(configuration.GetConnectionString("Redis")!);
+            services.AddSignalR().AddStackExchangeRedis(secretManager.GetConnectionString("redis"));
 
             return services;
         }

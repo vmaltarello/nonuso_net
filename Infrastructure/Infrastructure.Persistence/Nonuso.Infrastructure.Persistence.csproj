@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Domain\Nonuso.Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure.Secret\Nonuso.Infrastructure.Secret.csproj" />
   </ItemGroup>
 
 </Project>

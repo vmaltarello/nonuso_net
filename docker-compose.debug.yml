@@ -1,0 +1,126 @@
+services:
+
+  api:
+    build:
+      dockerfile: Dockerfile.debug
+      context: .
+    container_name: nonuso-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - ASPNETCORE_LOGGING__CONSOLE__DISABLECOLORS=true
+    volumes:
+      - .:/src
+    ports:
+      - "8080:8080"
+    secrets:
+      - db_connection
+      - redis_connection
+      - jwt_secret
+      - s3_access_key
+      - s3_secret_key
+      - s3_bucket_name
+      - s3_endpoint
+      - onesignal_api_key
+      - onesignal_app_id
+      - postgres_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+    
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: nonuso-postgres
+    environment:
+      - POSTGRES_DB=NonusoApp
+      - POSTGRES_USER=nonusouservm
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nonusouservm -d NonusoApp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  migrator:
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres
+    networks:
+      - nonuso-network
+    secrets:
+      - db_connection
+      - redis_connection
+      - jwt_secret
+      - s3_access_key
+      - s3_secret_key
+      - s3_bucket_name
+      - s3_endpoint
+      - onesignal_api_key
+      - onesignal_app_id
+      - postgres_password
+    environment:
+      - POSTGRES_DB=NonusoApp
+      - POSTGRES_USER=nonusouservm
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    entrypoint: ["bash", "./migrate.sh"]
+    
+  redis:
+    image: redis:7-alpine
+    container_name: nonuso-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  nonuso-network:
+    driver: bridge
+
+secrets:
+  db_connection:
+    file: ./secrets/db_connection.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_connection:
+    file: ./secrets/redis_connection.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  s3_access_key:
+    file: ./secrets/s3_access_key.txt
+  s3_secret_key:
+    file: ./secrets/s3_secret_key.txt
+  s3_bucket_name:
+    file: ./secrets/s3_bucket_name.txt
+  s3_endpoint:
+    file: ./secrets/s3_endpoint.txt
+  onesignal_api_key:
+    file: ./secrets/onesignal_api_key.txt
+  onesignal_app_id:
+    file: ./secrets/onesignal_app_id.txt

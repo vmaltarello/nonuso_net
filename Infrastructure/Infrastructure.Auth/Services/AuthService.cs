@@ -9,6 +9,7 @@ using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
 using Nonuso.Domain.Validators.Factory;
+using Nonuso.Infrastructure.Secret;
 using Nonuso.Messages.Api;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -24,7 +25,8 @@ namespace Nonuso.Infrastructure.Auth.Services
         SignInManager<User> signInManager, 
         IAuthRepository authRepository,
         INotificationService oneSignalService,
-        IConfiguration configuration) : IAuthService
+        IConfiguration configuration,
+        ISecretManager secretManager) : IAuthService
     {
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly UserManager<User> _userManager = userManager;
@@ -32,6 +34,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         readonly IAuthRepository _authRepository = authRepository;
         readonly INotificationService _oneSignalService = oneSignalService;
         readonly IConfiguration _configuration = configuration;
+        readonly ISecretManager _secretManager = secretManager;
         readonly string _wrongCredentialMessage = "wrongCredential";
 
         public async Task<UserResultModel> GetCurrentUserAsync(Guid id)
@@ -235,7 +238,7 @@ namespace Nonuso.Infrastructure.Auth.Services
             foreach (var role in userRoles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretManager.GetJwtSecret()));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

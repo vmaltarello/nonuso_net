@@ -7,8 +7,16 @@ services:
       - "8081:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=nonuso-postgres;Database=nonuso;Username=postgres;Password=postgres
-      - ConnectionStrings__Redis=nonuso-redis:6379,abortConnect=false
+    secrets:
+      - db_connection
+      - redis_connection
+      - jwt_secret
+      - s3_access_key
+      - s3_secret_key
+      - s3_bucket_name
+      - s3_endpoint
+      - onesignal_api_key
+      - onesignal_app_id
     depends_on:
       - postgres
       - redis
@@ -19,12 +27,8 @@ services:
   postgres:
     image: postgis/postgis:16-3.4
     container_name: nonuso-postgres
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=nonuso
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -50,3 +54,23 @@ volumes:
 networks:
   nonuso-network:
     driver: bridge
+
+secrets:
+  db_connection:
+    file: ./secrets/db_connection.txt
+  redis_connection:
+    file: ./secrets/redis_connection.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  s3_access_key:
+    file: ./secrets/s3_access_key.txt
+  s3_secret_key:
+    file: ./secrets/s3_secret_key.txt
+  s3_bucket_name:
+    file: ./secrets/s3_bucket_name.txt
+  s3_endpoint:
+    file: ./secrets/s3_endpoint.txt
+  onesignal_api_key:
+    file: ./secrets/onesignal_api_key.txt
+  onesignal_app_id:
+    file: ./secrets/onesignal_app_id.txt

@@ -8,6 +8,7 @@ using Nonuso.Infrastructure.Auth;
 using Nonuso.Infrastructure.Notification;
 using Nonuso.Infrastructure.Persistence;
 using Nonuso.Infrastructure.Redis;
+using Nonuso.Infrastructure.Secret;
 using Nonuso.Infrastructure.Storage;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -23,15 +24,22 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwagger(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddInfrastructureSecret();
 
-builder.Services.AddInfrastructurePersistence(builder.Configuration);
-builder.Services.AddInfrastructureAuth(builder.Configuration);
-builder.Services.AddInfrastructureS3Storage(builder.Configuration);
+#pragma warning disable ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
+var sp = builder.Services.BuildServiceProvider();
+#pragma warning restore ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
+var secretManager = sp.GetRequiredService<ISecretManager>();
+
+builder.Services.AddSwagger(secretManager, builder.Configuration);
+
+builder.Services.AddInfrastructurePersistence(secretManager);
+builder.Services.AddInfrastructureAuth(secretManager, builder.Configuration);
+builder.Services.AddInfrastructureS3Storage(secretManager);
+builder.Services.AddInfrastructureRedis(secretManager);
 builder.Services.AddInfrastructureNotification();
-builder.Services.AddInfrastructureRedis(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddValidators();
 
@@ -44,7 +52,7 @@ app.SetupSwagger();
 
 app.UseMiddleware<ApiExceptionHandler>();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors(builder => builder
                 .AllowAnyOrigin()

@@ -14,8 +14,8 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(NonusoDbContext))]
-    [Migration("20250518103330_InitDatabase")]
-    partial class InitDatabase
+    [Migration("20250528092122_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,6 +53,29 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("8821f3d9-fe96-4404-9c2f-8830a043a931"),
+                            ConcurrencyStamp = "65281764-0a8c-4eac-892e-d5f0bf888470",
+                            Name = "User",
+                            NormalizedName = "USER"
+                        },
+                        new
+                        {
+                            Id = new Guid("aa5334f3-837d-4f65-9ecc-8e471def97e6"),
+                            ConcurrencyStamp = "365ac856-70d5-461d-8c39-a69654e2cfc7",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("9302b5a3-d93b-4152-bd75-9f9ae7e9ff83"),
+                            ConcurrencyStamp = "8ee32c87-ab72-4a0e-b7aa-e7872fa38e64",
+                            Name = "Business",
+                            NormalizedName = "BUSINESS"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -357,8 +380,7 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductRequestId")
-                        .IsUnique();
+                    b.HasIndex("ProductRequestId");
 
                     b.ToTable("Conversation");
                 });
@@ -487,7 +509,6 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("ImagesUrl")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsEnabled")
@@ -666,11 +687,17 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastSignInAt")
@@ -719,6 +746,41 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.UserBlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdditionalInfo")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("BlockedId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BlockerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Reason")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockedId");
+
+                    b.HasIndex("BlockerId");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("UserBlock");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -775,8 +837,8 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Nonuso.Domain.Entities.Conversation", b =>
                 {
                     b.HasOne("Nonuso.Domain.Entities.ProductRequest", "ProductRequest")
-                        .WithOne("Conversation")
-                        .HasForeignKey("Nonuso.Domain.Entities.Conversation", "ProductRequestId")
+                        .WithMany()
+                        .HasForeignKey("ProductRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -925,17 +987,36 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Nonuso.Domain.Entities.UserBlock", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.User", "Blocked")
+                        .WithMany()
+                        .HasForeignKey("BlockedId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "Blocker")
+                        .WithMany()
+                        .HasForeignKey("BlockerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.Conversation", "Conversation")
+                        .WithMany()
+                        .HasForeignKey("ConversationId");
+
+                    b.Navigation("Blocked");
+
+                    b.Navigation("Blocker");
+
+                    b.Navigation("Conversation");
+                });
+
             modelBuilder.Entity("Nonuso.Domain.Entities.Conversation", b =>
                 {
                     b.Navigation("ConversationsInfo");
 
                     b.Navigation("Messages");
-                });
-
-            modelBuilder.Entity("Nonuso.Domain.Entities.ProductRequest", b =>
-                {
-                    b.Navigation("Conversation")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
