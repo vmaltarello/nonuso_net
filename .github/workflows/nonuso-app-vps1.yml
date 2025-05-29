@@ -28,61 +28,21 @@ jobs:
       - name: Publish app
         run: dotnet publish -c Release -o publish
 
-      - name: Create deployment package
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Copy files to VPS
         run: |
-          tar -czf deploy.tar.gz \
-            publish/ \
-            docker-compose.prod.yml \
-            Dockerfile.prod \
-            nginx/ \
-            migrate.sh
+          rsync -avz -e "ssh" ./publish/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/publish/
+          rsync -avz -e "ssh" docker-compose.prod.yml unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
+          rsync -avz -e "ssh" ./secrets/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/secrets/
 
-      - name: Copy files via SSH
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "deploy.tar.gz"
-          target: "/opt/nonuso-net"
-          strip_components: 0
-
-      - name: Run deployment script
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/nonuso-net
-            
-            # Backup del database
-            echo "Creating database backup..."
-            BACKUP_DIR="/opt/nonuso-backups/$(date +%Y%m%d_%H%M%S)"
-            mkdir -p $BACKUP_DIR
-            docker exec nonuso-postgres pg_dump -U nonusouservm NonusoApp > $BACKUP_DIR/db_backup.sql
-            
-            # Estrai il pacchetto
-            tar -xzf deploy.tar.gz
-            
-            # Ferma i container
-            docker compose -f docker-compose.prod.yml down
-            
-            # Rimuovi immagini non utilizzate
-            docker system prune -f
-            
-            # Riavvia i container
+      - name: Remote Docker Compose Deploy
+        run: |
+          ssh unonuso@${{ secrets.VPS_HOST }} << 'EOF'
+            cd ~/nonuso_net
             docker compose -f docker-compose.prod.yml up -d --build
-            
-            # Attendi che i servizi siano pronti
-            echo "Waiting for services to be ready..."
-            sleep 30
-            
-            # Esegui le migrazioni
-            
-            
-            # Verifica lo stato dei container
-            docker ps
-            
-            # Invia notifica di successo
+          EOF
            
