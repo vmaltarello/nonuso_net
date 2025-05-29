@@ -25,11 +25,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Common", "Common\Non
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{00DD7339-AF12-4345-8152-2E46C26148AF}"
 	ProjectSection(SolutionItems) = preProject
+		docker-compose.prod.yml = docker-compose.prod.yml
 		docker-compose.yaml = docker-compose.yaml
 		docker-compose.debug.yml = docker-compose.debug.yml
 		debug.ps1 = debug.ps1
 		Dockerfile = Dockerfile
 		Dockerfile.debug = Dockerfile.debug
+		Dockerfile.prod = Dockerfile.prod
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Storage", "Infrastructure.Storage", "{6846FE66-236D-464C-861E-29C588C4C2D6}"
