@@ -3,6 +3,7 @@ name: Deploy to Hetzner VPS
 on:
   push:
     branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -18,11 +19,23 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Build project
-        run: dotnet build --configuration Release
+      - name: Build and Test
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build
 
       - name: Publish app
         run: dotnet publish -c Release -o publish
+
+      - name: Create deployment package
+        run: |
+          tar -czf deploy.tar.gz \
+            publish/ \
+            docker-compose.prod.yml \
+            Dockerfile.prod \
+            nginx/ \
+            migrate.sh
 
       - name: Copy files via SSH
         uses: appleboy/scp-action@v0.1.4
@@ -30,10 +43,11 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "."
+          source: "deploy.tar.gz"
           target: "/opt/nonuso-net"
+          strip_components: 0
 
-      - name: Run deploy and migrate scripts via SSH
+      - name: Run deployment script
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -41,45 +55,34 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/nonuso-net
-
-            echo "Stopping and recreating containers"
-            docker compose down
-            docker compose up -d --build
-
-            echo "Checking Docker network for 'nonuso'"
-            NETWORK_NAME=$(docker network ls | grep nonuso | awk '{print $2}')
-            if [ -z "$NETWORK_NAME" ]; then
-              echo "ERROR: Docker network not found"
-              docker network ls
-              exit 1
-            fi
-            echo "Docker network found: $NETWORK_NAME"
-
-            echo "Waiting for nonuso-postgres container to be running..."
-            while ! docker ps --filter "name=nonuso-postgres" --filter "status=running" | grep nonuso-postgres; do
-              echo "Waiting for nonuso-postgres..."
-              sleep 5
-            done
-
-            echo "Checking nonuso-api container..."
-            for i in {1..10}; do
-              STATUS=$(docker inspect -f '{{.State.Status}}' nonuso-api 2>/dev/null || echo "notfound")
-              if [ "$STATUS" = "running" ]; then
-                echo "nonuso-api container is running"
-                break
-              fi
-              echo "Waiting for nonuso-api container... status: $STATUS"
-              sleep 5
-            done
-
-            if [ "$STATUS" != "running" ]; then
-              echo "Warning: nonuso-api container is not running, proceeding anyway"
-            fi
-
-            echo "Making migrate.sh executable"
-            chmod +x ./migrate.sh
-
-            echo "Running migrate.sh with Docker network: $NETWORK_NAME"
-            ./migrate.sh "$NETWORK_NAME"
-
-            echo "=== DEPLOY AND MIGRATION COMPLETED ==="
+            
+            # Backup del database
+            echo "Creating database backup..."
+            BACKUP_DIR="/opt/nonuso-backups/$(date +%Y%m%d_%H%M%S)"
+            mkdir -p $BACKUP_DIR
+            docker exec nonuso-postgres pg_dump -U nonusouservm NonusoApp > $BACKUP_DIR/db_backup.sql
+            
+            # Estrai il pacchetto
+            tar -xzf deploy.tar.gz
+            
+            # Ferma i container
+            docker compose -f docker-compose.prod.yml down
+            
+            # Rimuovi immagini non utilizzate
+            docker system prune -f
+            
+            # Riavvia i container
+            docker compose -f docker-compose.prod.yml up -d --build
+            
+            # Attendi che i servizi siano pronti
+            echo "Waiting for services to be ready..."
+            sleep 30
+            
+            # Esegui le migrazioni
+            
+            
+            # Verifica lo stato dei container
+            docker ps
+            
+            # Invia notifica di successo
+           
