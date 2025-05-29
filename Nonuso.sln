@@ -32,6 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Dockerfile = Dockerfile
 		Dockerfile.debug = Dockerfile.debug
 		Dockerfile.prod = Dockerfile.prod
+		server-setup.sh = server-setup.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Storage", "Infrastructure.Storage", "{6846FE66-236D-464C-861E-29C588C4C2D6}"
