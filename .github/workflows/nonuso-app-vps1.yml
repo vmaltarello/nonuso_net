@@ -9,40 +9,85 @@ jobs:
   deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
+      - name: Cache .NET packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Build and Test
         run: |
           dotnet restore
           dotnet build --configuration Release --no-restore
-          dotnet test --configuration Release --no-build
+          dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage"
 
       - name: Publish app
-        run: dotnet publish -c Release -o publish
+        run: |
+          dotnet publish -c Release -o publish --no-restore
+          tar -czf publish.tar.gz publish/
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
       - name: Copy files to VPS
         run: |
-          rsync -avz -e "ssh" ./publish/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/publish/
-          rsync -avz -e "ssh" docker-compose.prod.yml unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
-          rsync -avz -e "ssh" ./secrets/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/secrets/
+          rsync -avz --delete -e "ssh" ./publish.tar.gz unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
+          rsync -avz --delete -e "ssh" docker-compose.prod.yml unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
+          rsync -avz --delete -e "ssh" ./secrets/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/secrets/
 
       - name: Remote Docker Compose Deploy
         run: |
           ssh unonuso@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
             cd ~/nonuso_net
-            docker compose -f docker-compose.prod.yml up -d --build
+            
+            # Backup dei volumi Docker
+            docker run --rm \
+              -v nonuso-postgres-data:/source:ro \
+              -v /tmp:/backup \
+              alpine tar czf /backup/postgres-data-backup.tar.gz -C /source .
+            
+            # Estrai i nuovi file
+            rm -rf publish
+            tar -xzf publish.tar.gz
+            
+            # Deploy con Docker Compose
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            
+            # Pulizia
+            docker system prune -f
+            rm -f publish.tar.gz
           EOF
-           
+
+      - name: Verify Deployment
+        run: |
+          ssh unonuso@${{ secrets.VPS_HOST }} << 'EOF'
+            # Verifica che i container siano in esecuzione
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            # Verifica i log per errori
+            docker compose -f docker-compose.prod.yml logs --tail=50
+          EOF
