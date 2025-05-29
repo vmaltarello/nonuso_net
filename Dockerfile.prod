@@ -7,9 +7,9 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
+# Copy all project files
 COPY ["Api/Nonuso.Api.csproj", "Api/"]
 COPY ["Application/Nonuso.Application.csproj", "Application/"]
 COPY ["Domain/Nonuso.Domain.csproj", "Domain/"]
@@ -22,17 +22,45 @@ COPY ["Infrastructure/Infrastructure.Storage/Nonuso.Infrastructure.Storage.cspro
 COPY ["Infrastructure/Infrastructure.Notification/Nonuso.Infrastructure.Notification.csproj", "Infrastructure/Infrastructure.Notification/"]
 COPY ["Infrastructure/Infrastructure.Redis/Nonuso.Infrastructure.Redis.csproj", "Infrastructure/Infrastructure.Redis/"]
 
+# Restore dependencies
 RUN dotnet restore "Api/Nonuso.Api.csproj"
+
+# Copy everything else and build
 COPY . .
-WORKDIR "/src/Api"
-RUN dotnet build "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "Api/Nonuso.Api.csproj" -c Release -o /app/build
 
+# Publish stage
 FROM build AS publish
-RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore --no-build /p:UseAppHost=false
+RUN dotnet publish "Api/Nonuso.Api.csproj" -c Release -o /app/publish --no-restore --no-build /p:UseAppHost=false
 
-FROM base AS final
+# Final stage
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
-RUN adduser --disabled-password --gecos "" app
-USER app
+
+# Install security updates and required packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy published files
 COPY --from=publish /app/publish .
+
+# Set environment variables
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Create non-root user
+RUN adduser --disabled-password --gecos "" appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
 ENTRYPOINT ["dotnet", "Nonuso.Api.dll"]
