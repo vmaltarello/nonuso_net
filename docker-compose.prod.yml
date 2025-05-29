@@ -1,0 +1,153 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      dockerfile: Dockerfile.prod
+      context: .
+    container_name: nonuso-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+    expose:
+      - "8080"
+    secrets:
+      - db_connection
+      - redis_connection
+      - jwt_secret
+      - s3_access_key
+      - s3_secret_key
+      - s3_bucket_name
+      - s3_endpoint
+      - onesignal_api_key
+      - onesignal_app_id
+      - postgres_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: nonuso-postgres
+    environment:
+      - POSTGRES_DB=NonusoApp
+      - POSTGRES_USER=nonusouservm
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    expose:
+      - "5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nonusouservm -d NonusoApp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=100
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+      -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+      -c password_encryption=scram-sha-256
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_statement=ddl
+      -c log_min_duration_statement=1000
+
+  redis:
+    image: redis:7-alpine
+    container_name: nonuso-redis
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --protected-mode yes
+      --bind 0.0.0.0
+      --port 6379
+      --tcp-backlog 511
+      --timeout 0
+      --tcp-keepalive 300
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: nonuso-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - api
+    networks:
+      - nonuso-network
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  nonuso-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+secrets:
+  db_connection:
+    file: ./secrets/db_connection.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_connection:
+    file: ./secrets/redis_connection.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  s3_access_key:
+    file: ./secrets/s3_access_key.txt
+  s3_secret_key:
+    file: ./secrets/s3_secret_key.txt
+  s3_bucket_name:
+    file: ./secrets/s3_bucket_name.txt
+  s3_endpoint:
+    file: ./secrets/s3_endpoint.txt
+  onesignal_api_key:
+    file: ./secrets/onesignal_api_key.txt
+  onesignal_app_id:
+    file: ./secrets/onesignal_app_id.txt 
