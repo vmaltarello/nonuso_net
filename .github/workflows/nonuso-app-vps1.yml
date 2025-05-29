@@ -1,12 +1,16 @@
-name: Deploy to Hetzner VPS
+name: Deploy to Production
 
 on:
   push:
     branches: [ "master" ]
   workflow_dispatch:
 
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOCKER_COMPOSE_VERSION: 'v2.24.6'
+
 jobs:
-  deploy:
+  build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
     environment: production
@@ -20,7 +24,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Cache .NET packages
         uses: actions/cache@v4
@@ -56,6 +60,7 @@ jobs:
           rsync -avz --delete -e "ssh" ./publish.tar.gz unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
           rsync -avz --delete -e "ssh" docker-compose.prod.yml unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
           rsync -avz --delete -e "ssh" ./secrets/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/secrets/
+          rsync -avz --delete -e "ssh" ./nginx/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/nginx/
 
       - name: Remote Docker Compose Deploy
         run: |
@@ -64,20 +69,24 @@ jobs:
             cd ~/nonuso_net
             
             # Backup dei volumi Docker
+            echo "Creating backup of Docker volumes..."
             docker run --rm \
               -v nonuso-postgres-data:/source:ro \
               -v /tmp:/backup \
               alpine tar czf /backup/postgres-data-backup.tar.gz -C /source .
             
             # Estrai i nuovi file
+            echo "Extracting new files..."
             rm -rf publish
             tar -xzf publish.tar.gz
             
             # Deploy con Docker Compose
+            echo "Deploying with Docker Compose..."
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
             
             # Pulizia
+            echo "Cleaning up..."
             docker system prune -f
             rm -f publish.tar.gz
           EOF
@@ -85,9 +94,17 @@ jobs:
       - name: Verify Deployment
         run: |
           ssh unonuso@${{ secrets.VPS_HOST }} << 'EOF'
+            echo "Verifying deployment..."
+            
             # Verifica che i container siano in esecuzione
+            echo "Checking running containers..."
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             
             # Verifica i log per errori
+            echo "Checking container logs..."
             docker compose -f docker-compose.prod.yml logs --tail=50
+            
+            # Verifica health check
+            echo "Checking health endpoints..."
+            curl -f https://api.nonuso.com/health || exit 1
           EOF
