@@ -2,109 +2,74 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ main ]
   workflow_dispatch:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  DOCKER_COMPOSE_VERSION: 'v2.24.6'
+  DOCKER_COMPOSE_VERSION: 'v2.24.5'
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - uses: actions/checkout@v4
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Cache .NET packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+    - name: Setup Docker Compose
+      uses: ndeloof/install-compose@v1
+      with:
+        version: ${{ env.DOCKER_COMPOSE_VERSION }}
 
-      - name: Build and Test
-        run: |
-          dotnet restore
-          dotnet build --configuration Release --no-restore
-          dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage"
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+        echo "Host ${{ secrets.VPS_HOST }}" >> ~/.ssh/config
+        echo "  IdentityFile ~/.ssh/deploy_key" >> ~/.ssh/config
+        echo "  StrictHostKeyChecking no" >> ~/.ssh/config
 
-      - name: Publish app
-        run: |
-          dotnet publish -c Release -o publish --no-restore
-          tar -czf publish.tar.gz publish/
+    - name: Build and Test
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        dotnet test --no-build --verbosity normal
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+    - name: Create Backup
+      run: |
+        echo "Creating backup..."
+        ssh -i ~/.ssh/deploy_key ununuso@${{ secrets.VPS_HOST }} "cd /home/ununuso/nonuso_net && docker-compose -f docker-compose.prod.yml down && tar -czf backup_$(date +%Y%m%d_%H%M%S).tar.gz ."
 
-      - name: Add host key
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+    - name: Deploy
+      run: |
+        echo "Deploying to production..."
+        rsync -avz --delete \
+          --exclude '.git' \
+          --exclude 'node_modules' \
+          --exclude '*.tar.gz' \
+          -e "ssh -i ~/.ssh/deploy_key" \
+          ./ ununuso@${{ secrets.VPS_HOST }}:/home/ununuso/nonuso_net/
 
-      - name: Copy files to VPS
-        run: |
-          rsync -avz --delete -e "ssh" ./publish.tar.gz unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
-          rsync -avz --delete -e "ssh" docker-compose.prod.yml unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
-          rsync -avz --delete -e "ssh" ./secrets/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/secrets/
-          rsync -avz --delete -e "ssh" ./nginx/ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/nginx/
+    - name: Start Services
+      run: |
+        echo "Starting services..."
+        ssh -i ~/.ssh/deploy_key ununuso@${{ secrets.VPS_HOST }} "cd /home/ununuso/nonuso_net && docker-compose -f docker-compose.prod.yml up -d"
 
-      - name: Remote Docker Compose Deploy
-        run: |
-          ssh unonuso@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e
-            cd ~/nonuso_net
-            
-            # Backup dei volumi Docker
-            echo "Creating backup of Docker volumes..."
-            docker run --rm \
-              -v nonuso-postgres-data:/source:ro \
-              -v /tmp:/backup \
-              alpine tar czf /backup/postgres-data-backup.tar.gz -C /source .
-            
-            # Estrai i nuovi file
-            echo "Extracting new files..."
-            rm -rf publish
-            tar -xzf publish.tar.gz
-            
-            # Deploy con Docker Compose
-            echo "Deploying with Docker Compose..."
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
-            
-            # Pulizia
-            echo "Cleaning up..."
-            docker system prune -f
-            rm -f publish.tar.gz
-          EOF
+    - name: Run Migrations
+      run: |
+        echo "Running database migrations..."
+        ssh -i ~/.ssh/deploy_key ununuso@${{ secrets.VPS_HOST }} "cd /home/ununuso/nonuso_net && docker-compose -f docker-compose.prod.yml run --rm migrator"
 
-      - name: Verify Deployment
-        run: |
-          ssh unonuso@${{ secrets.VPS_HOST }} << 'EOF'
-            echo "Verifying deployment..."
-            
-            # Verifica che i container siano in esecuzione
-            echo "Checking running containers..."
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-            
-            # Verifica i log per errori
-            echo "Checking container logs..."
-            docker compose -f docker-compose.prod.yml logs --tail=50
-            
-            # Verifica health check
-            echo "Checking health endpoints..."
-            curl -f https://api.nonuso.com/health || exit 1
-          EOF
+    - name: Verify Deployment
+      run: |
+        echo "Verifying deployment..."
+        sleep 30  # Wait for services to start
+        curl -f https://${{ secrets.VPS_HOST }}:8080/health || exit 1
