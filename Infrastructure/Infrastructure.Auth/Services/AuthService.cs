@@ -110,10 +110,13 @@ namespace Nonuso.Infrastructure.Auth.Services
         public async Task<UserResultModel> SignInAsync(UserSignInParamModel model)
         {
             var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false);
+            Console.WriteLine($"AUTHENTICAZIONE con {model.UserName} e pwd {model.Password}");
+            Console.WriteLine($"AUTHENTICAZIONE RESULT: successed:{result.Succeeded} - isNotAllowed:{result.IsNotAllowed}");
 
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByNameAsync(model.UserName);
+                Console.WriteLine($"AUTHENTICAZIONE USER: {user?.EmailConfirmed}");
 
                 if (user != null)
                 {
@@ -126,7 +129,7 @@ namespace Nonuso.Infrastructure.Auth.Services
                 }
             }
 
-            throw new AuthWrongCredentialException(_wrongCredentialMessage); ;    
+            throw new AuthWrongCredentialException(_wrongCredentialMessage);
         }
 
         public async Task SignOutAsync(Guid id)
