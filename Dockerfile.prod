@@ -23,18 +23,19 @@ COPY ["Infrastructure/Infrastructure.Notification/Nonuso.Infrastructure.Notifica
 COPY ["Infrastructure/Infrastructure.Redis/Nonuso.Infrastructure.Redis.csproj", "Infrastructure/Infrastructure.Redis/"]
 
 RUN dotnet restore "Api/Nonuso.Api.csproj"
+
+# Copy source code
 COPY . .
 WORKDIR "/src/Api"
-RUN dotnet build "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-FROM build AS publish
-RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore --no-build /p:UseAppHost=false
+# Build and Publish in Release mode
+RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 
 # Copia l'applicazione pubblicata
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 
 # Crea utente non-root e imposta permessi (l'utente 'appuser' esiste già nella base image)
 RUN chown -R appuser /app

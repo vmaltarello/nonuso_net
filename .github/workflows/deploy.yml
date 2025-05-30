@@ -1,0 +1,33 @@
+- name: Create Backup
+  run: |
+    echo "Creating backup..."
+    # Verifica se la directory di deploy esiste sul server prima di fare il backup
+    ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "\
+      if [ -d /home/unonuso/nonuso_net ]; then \
+        echo 'Directory exists, creating backup...'; \
+        cd /home/unonuso/nonuso_net && \
+        # Fermo i container solo se il file docker-compose esiste (ovvero non è il primissimo deploy) \
+        if [ -f docker-compose.prod.yml ]; then \
+          docker compose -f docker-compose.prod.yml down || true; \
+        fi; \
+        # Creo il backup dei file esistenti (escludendo backup precedenti) \
+        tar --exclude='*.tar.gz' -czf backup_$(date +%Y%m%d_%H%M%S).tar.gz .; \
+        echo 'Backup created.'; \
+      else \
+        echo 'Directory does not exist, skipping backup.'; \
+      fi
+    "
+
+- name: Deploy
+  run: |
+    echo "Deploying to production..."
+    rsync -avz --delete \
+      --exclude '.git' \
+      --exclude 'node_modules' \
+      --exclude '*.tar.gz' \
+      --exclude 'bin/' \
+      --exclude 'obj/' \
+      -e "ssh -i ~/.ssh/deploy_key" \
+      ./ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
+
+- name: Start Services 
