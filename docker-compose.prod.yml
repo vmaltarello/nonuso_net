@@ -105,9 +105,8 @@ services:
       - jwt_secret
       - postgres_password
     environment:
-      - POSTGRES_DB=NonusoApp
-      - POSTGRES_USER=nonusouservm
-      - POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password)
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=$(cat /run/secrets/db_connection)
     entrypoint: ["bash", "./migrate.sh"]
 
 volumes:
