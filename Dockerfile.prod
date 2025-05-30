@@ -37,9 +37,11 @@ WORKDIR /app
 # Copia l'applicazione pubblicata
 COPY --from=build /app/publish .
 
-# Crea utente non-root e imposta permessi (l'utente 'appuser' esiste già nella base image)
-RUN chown -R appuser /app
-USER appuser
+# Crea utente non-root e imposta permessi
+# Usiamo un nome utente specifico per evitare conflitti con utenti preesistenti nell'immagine base
+RUN adduser --disabled-password --gecos "" dotnetappuser && \
+    chown -R dotnetappuser /app
+USER dotnetappuser
 
 # Entry point
 ENTRYPOINT ["dotnet", "Nonuso.Api.dll"]
