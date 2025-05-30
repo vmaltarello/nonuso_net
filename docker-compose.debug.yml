@@ -70,12 +70,6 @@ services:
       - db_connection
       - redis_connection
       - jwt_secret
-      - s3_access_key
-      - s3_secret_key
-      - s3_bucket_name
-      - s3_endpoint
-      - onesignal_api_key
-      - onesignal_app_id
       - postgres_password
     environment:
       - POSTGRES_DB=NonusoApp

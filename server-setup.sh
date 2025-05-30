@@ -61,6 +61,83 @@ touch /home/$APP_USER/.ssh/authorized_keys
 chmod 600 /home/$APP_USER/.ssh/authorized_keys
 chown -R $APP_USER:$APP_GROUP /home/$APP_USER/.ssh
 
+# Configura SSH per permettere sia chiavi che password inizialmente
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+systemctl restart sshd
+
+# Crea directory per l'applicazione con i permessi corretti
+log "Configurazione directory applicazione..."
+mkdir -p /home/$APP_USER/nonuso_net
+mkdir -p /home/$APP_USER/nonuso_net/secrets
+mkdir -p /home/$APP_USER/nonuso_net/nginx
+mkdir -p /home/$APP_USER/nonuso_net/logs
+chown -R $APP_USER:$APP_GROUP /home/$APP_USER/nonuso_net
+chmod -R 755 /home/$APP_USER/nonuso_net
+chmod 700 /home/$APP_USER/nonuso_net/secrets
+
+# Configura sudo per l'utente
+log "Configurazione sudo per l'utente..."
+echo "$APP_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl status nginx, /usr/bin/systemctl restart nginx, /usr/bin/systemctl stop nginx, /usr/bin/systemctl start nginx, /usr/bin/docker, /usr/bin/docker-compose" | tee /etc/sudoers.d/$APP_USER
+chmod 440 /etc/sudoers.d/$APP_USER
+
+# Aggiungi l'utente ai gruppi necessari
+usermod -aG docker,adm $APP_USER
+
+# Configura SSH per GitHub Actions
+log "Configurazione SSH per GitHub Actions..."
+if [ ! -f "/root/github_actions_key" ]; then
+    log "Generazione nuova chiave SSH per GitHub Actions..."
+    ssh-keygen -t ed25519 -f /root/github_actions_key -N "" -C "vmaltarello@gmail"
+    mv /root/github_actions_key.pub /root/github_actions_key.pub.bak
+    cat /root/github_actions_key.pub.bak > /root/github_actions_key.pub
+    rm /root/github_actions_key.pub.bak
+    chmod 600 /root/github_actions_key
+    chmod 644 /root/github_actions_key.pub
+    log "Chiave SSH generata. Aggiungi questa chiave pubblica a GitHub Actions secrets (VPS_SSH_KEY):"
+    echo -e "${YELLOW}"
+    cat /root/github_actions_key.pub
+    echo -e "${NC}"
+fi
+
+# Aggiungi la chiave pubblica all'utente unonuso
+cat /root/github_actions_key.pub >> /home/$APP_USER/.ssh/authorized_keys
+chown $APP_USER:$APP_GROUP /home/$APP_USER/.ssh/authorized_keys
+chmod 600 /home/$APP_USER/.ssh/authorized_keys
+
+# Crea script per aggiungere chiavi SSH
+cat > /usr/local/bin/add-ssh-key << 'EOF'
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]; then 
+    echo "Questo script deve essere eseguito come root"
+    exit 1
+fi
+
+if [ -z "$1" ]; then
+    echo "Uso: add-ssh-key <chiave_pubblica>"
+    exit 1
+fi
+
+echo "$1" >> /home/unonuso/.ssh/authorized_keys
+chown unonuso:unonuso /home/unonuso/.ssh/authorized_keys
+chmod 600 /home/unonuso/.ssh/authorized_keys
+echo "Chiave SSH aggiunta con successo"
+EOF
+
+chmod +x /usr/local/bin/add-ssh-key
+
+# Messaggi finali per l'utente
+log "Setup SSH completato!"
+echo -e "\n${YELLOW}IMPORTANTE:${NC}"
+echo "1. Per aggiungere una nuova chiave SSH, usa:"
+echo "   sudo add-ssh-key 'chiave_pubblica'"
+echo "2. Per GitHub Actions, copia la chiave pubblica in:"
+echo "   /root/github_actions_key.pub"
+echo "3. Dopo aver configurato tutte le chiavi necessarie, puoi disabilitare l'accesso con password:"
+echo "   sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config"
+echo "   sudo systemctl restart sshd"
+
 # =============================================
 # 1. Aggiornamento Sistema e Installazione Pacchetti Base
 # =============================================
@@ -81,10 +158,6 @@ sudo apt install -y \
     ufw \
     unattended-upgrades \
     logwatch \
-    prometheus \
-    prometheus-node-exporter \
-    prometheus-pushgateway \
-    grafana \
     certbot \
     python3-certbot-nginx \
     git \
@@ -159,12 +232,9 @@ sudo usermod -aG docker $USER
 log "Configurazione di Nginx..."
 
 # Crea directory necessarie
-sudo mkdir -p /etc/nginx/modsecurity
-sudo mkdir -p /var/log/nginx/modsec_audit
 sudo mkdir -p /etc/nginx/ssl
-
-# Installa ModSecurity
-sudo apt install -y libnginx-mod-http-modsecurity
+sudo mkdir -p /etc/nginx/sites-available
+sudo mkdir -p /etc/nginx/sites-enabled
 
 # Copia configurazioni Nginx
 sudo tee /etc/nginx/nginx.conf > /dev/null << 'EOL'
@@ -203,8 +273,56 @@ http {
     gzip_types text/plain text/css text/xml application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
 
     include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
 }
 EOL
+
+# Crea configurazione per api.nonuso.com
+sudo tee /etc/nginx/sites-available/api.nonuso.com > /dev/null << 'EOL'
+server {
+    listen 80;
+    server_name api.nonuso.com;
+    
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.nonuso.com;
+
+    ssl_certificate /etc/letsencrypt/live/api.nonuso.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.nonuso.com/privkey.pem;
+    
+    # SSL configuration
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_tickets off;
+    
+    # HSTS (uncomment if you're sure)
+    # add_header Strict-Transport-Security "max-age=63072000" always;
+    
+    # Proxy settings
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOL
+
+# Abilita il sito
+sudo ln -sf /etc/nginx/sites-available/api.nonuso.com /etc/nginx/sites-enabled/
+
+# Riavvia Nginx
+sudo systemctl restart nginx
 
 # =============================================
 # 5. Configurazione Let's Encrypt
@@ -218,57 +336,13 @@ sudo certbot --nginx -d api.nonuso.com --non-interactive --agree-tos --email vma
 echo "0 0 * * * root certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null
 
 # =============================================
-# 6. Configurazione Monitoring
-# =============================================
-log "Configurazione del monitoring..."
-
-# Configura Prometheus
-sudo tee /etc/prometheus/prometheus.yml > /dev/null << EOL
-global:
-  scrape_interval: 30s
-  evaluation_interval: 30s
-
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
-  - job_name: 'node'
-    static_configs:
-      - targets: ['localhost:9100']
-
-  - job_name: 'docker'
-    static_configs:
-      - targets: ['localhost:9323']
-
-  - job_name: 'nonuso-api'
-    static_configs:
-      - targets: ['api:8080']
-EOL
-
-# Configura Grafana
-sudo tee /etc/grafana/grafana.ini > /dev/null << EOL
-[server]
-http_port = 3000
-domain = localhost
-root_url = http://localhost:3000/
-
-[security]
-admin_user = admin
-admin_password = your_secure_password
-
-[auth.anonymous]
-enabled = true
-EOL
-
-# Riavvia servizi
-sudo systemctl restart prometheus
-sudo systemctl restart grafana-server
-
-# =============================================
-# 7. Configurazione Backup
+# 6. Configurazione Backup
 # =============================================
 log "Configurazione del sistema di backup..."
+
+# Crea directory per i backup
+sudo mkdir -p /opt/nonuso-net
+sudo mkdir -p /opt/nonuso-backups
 
 # Crea script di backup
 sudo tee /opt/nonuso-net/backup.sh > /dev/null << 'EOL'
@@ -302,7 +376,7 @@ sudo chmod +x /opt/nonuso-net/backup.sh
 echo "0 2 * * * /opt/nonuso-net/backup.sh" | sudo tee -a /etc/crontab > /dev/null
 
 # =============================================
-# 8. Configurazione Log Rotation
+# 7. Configurazione Log Rotation
 # =============================================
 log "Configurazione della rotazione dei log..."
 
@@ -333,7 +407,7 @@ sudo tee /etc/logrotate.d/nonuso > /dev/null << EOL
 EOL
 
 # =============================================
-# 9. Configurazione Directory e Permessi
+# 8. Configurazione Directory e Permessi
 # =============================================
 log "Configurazione delle directory e permessi..."
 
@@ -348,15 +422,13 @@ sudo chmod -R 755 /opt/nonuso-net
 sudo chown -R www-data:www-data /var/log/nginx
 
 # =============================================
-# 10. Verifica Finale
+# 9. Verifica Finale
 # =============================================
 log "Esecuzione verifica finale..."
 
 # Verifica servizi
 sudo systemctl status nginx
 sudo systemctl status fail2ban
-sudo systemctl status prometheus
-sudo systemctl status grafana-server
 
 # Verifica configurazione Nginx
 sudo nginx -t
@@ -369,6 +441,5 @@ log "1. Configurare il DNS per api.nonuso.com"
 log "2. Aggiornare le password di default"
 log "3. Configurare i backup"
 log "4. Verificare i log per eventuali errori"
-log "5. Configurare le notifiche di monitoring"
 
 log "Il server è pronto per il deployment!" 
