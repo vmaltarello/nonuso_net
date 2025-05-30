@@ -65,6 +65,49 @@ jobs:
           -e "ssh -i ~/.ssh/deploy_key" \
           ./ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
 
+    - name: Write Secrets to Files on Server
+      run: |
+        echo "Writing secrets to files on server..."
+        SSH_COMMAND="ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }}"
+        SECRET_DIR="/home/unonuso/nonuso_net/secrets"
+        $SSH_COMMAND "mkdir -p $SECRET_DIR"  
+        echo "${{ secrets.DB_CONNECTION }}" > db_connection.txt
+        echo "${{ secrets.POSTGRES_PASSWORD }}" > postgres_password.txt
+        echo "${{ secrets.REDIS_CONNECTION }}" > redis_connection.txt
+        echo "${{ secrets.JWT_SECRET }}" > jwt_secret.txt
+        echo "${{ secrets.S3_ACCESS_KEY }}" > s3_access_key.txt
+        echo "${{ secrets.S3_SECRET_KEY }}" > s3_secret_key.txt
+        echo "${{ secrets.S3_BUCKET_NAME }}" > s3_bucket_name.txt
+        echo "${{ secrets.S3_ENDPOINT }}" > s3_endpoint.txt
+        echo "${{ secrets.ONESIGNAL_API_KEY }}" > onesignal_api_key.txt
+        echo "${{ secrets.ONESIGNAL_APP_ID }}" > onesignal_app_id.txt
+        echo "${{ secrets.REDIS_PASSWORD }}" > redis_password.txt  
+        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+          db_connection.txt \
+          postgres_password.txt \
+          redis_connection.txt \
+          jwt_secret.txt \
+          s3_access_key.txt \
+          s3_secret_key.txt \
+          s3_bucket_name.txt \
+          s3_endpoint.txt \
+          onesignal_api_key.txt \
+          onesignal_app_id.txt \
+          redis_password.txt \
+          unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/secrets/  
+        rm db_connection.txt \
+           postgres_password.txt \
+           redis_connection.txt \
+           jwt_secret.txt \
+           s3_access_key.txt \
+           s3_secret_key.txt \
+           s3_bucket_name.txt \
+           s3_endpoint.txt \
+           onesignal_api_key.txt \
+           onesignal_app_id.txt \
+           redis_password.txt  
+        echo "Secrets written and secured on server."
+
     - name: Start Services
       run: |
         echo "Starting services..."
