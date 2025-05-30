@@ -103,7 +103,10 @@ services:
       - db_connection
       - redis_connection
       - jwt_secret
-    entrypoint: ["bash", "./migrate.sh"]
+      - postgres_password
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    entrypoint: ["bash", "-c", "ls -la /run/secrets && cat /run/secrets/db_connection && ./migrate.sh"]
 
 volumes:
   postgres-data:
