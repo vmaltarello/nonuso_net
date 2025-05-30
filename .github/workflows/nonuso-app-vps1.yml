@@ -39,9 +39,20 @@ jobs:
 
     - name: Create Backup
       run: |
-        echo "Creating backup..."
-        ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "cd /home/unonuso/nonuso_net && docker compose -f docker-compose.prod.yml down && tar -czf backup_$(date +%Y%m%d_%H%M%S).tar.gz ."
-
+        echo "Creating backup..."    
+        ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "\
+        if [ -d /home/unonuso/nonuso_net ]; then \
+          echo 'Directory exists, creating backup...'; \
+          cd /home/unonuso/nonuso_net && \
+          if [ -f docker-compose.prod.yml ]; then \
+            docker compose -f docker-compose.prod.yml down || true; \
+          fi; \
+          tar --exclude='*.tar.gz' -czf backup_$(date +%Y%m%d_%H%M%S).tar.gz .; \
+          echo 'Backup created.'; \
+        else \
+          echo 'Directory does not exist, skipping backup.'; \
+        fi"
+        
     - name: Deploy
       run: |
         echo "Deploying to production..."
