@@ -117,7 +117,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
                 if (user != null)
                 {
-                    if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
+                    //if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
 
                     user.LastSignInAt = DateTime.UtcNow;
                     await _userManager.UpdateAsync(user);

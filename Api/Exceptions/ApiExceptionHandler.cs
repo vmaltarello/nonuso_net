@@ -28,6 +28,7 @@ namespace Nonuso.Api.Exceptions
             context.Response.StatusCode = ex switch
             {
                 EntityNotFoundException => StatusCodes.Status404NotFound,
+                AuthWrongCredentialException => StatusCodes.Status401Unauthorized,
                 AuthUnauthorizedException => StatusCodes.Status401Unauthorized,
                 _ => StatusCodes.Status500InternalServerError
             };
