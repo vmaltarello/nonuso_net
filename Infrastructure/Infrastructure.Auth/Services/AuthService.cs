@@ -2,6 +2,7 @@
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Nonuso.Application.IServices;
 using Nonuso.Common;
@@ -20,14 +21,16 @@ using System.Text;
 namespace Nonuso.Infrastructure.Auth.Services
 {
     public class AuthService(
+        ILogger<AuthService> logger,
         IDomainValidatorFactory validatorFactory,
         UserManager<User> userManager, 
         SignInManager<User> signInManager, 
         IAuthRepository authRepository,
         INotificationService oneSignalService,
-        IConfiguration configuration,
+        IConfiguration configuration,        
         ISecretManager secretManager) : IAuthService
     {
+        readonly ILogger<AuthService> _logger = logger;
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly UserManager<User> _userManager = userManager;
         readonly SignInManager<User> _signInManager = signInManager;
@@ -109,18 +112,17 @@ namespace Nonuso.Infrastructure.Auth.Services
 
         public async Task<UserResultModel> SignInAsync(UserSignInParamModel model)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false);
-            Console.WriteLine($"AUTHENTICAZIONE con {model.UserName} e pwd {model.Password}");
-            Console.WriteLine($"AUTHENTICAZIONE RESULT: successed:{result.Succeeded} - isNotAllowed:{result.IsNotAllowed}");
+            _logger.LogInformation("START SIGN IN");
 
+            var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false);
+            
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByNameAsync(model.UserName);
-                Console.WriteLine($"AUTHENTICAZIONE USER: {user?.EmailConfirmed}");
 
                 if (user != null)
                 {
-                    //if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
+                    if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
 
                     user.LastSignInAt = DateTime.UtcNow;
                     await _userManager.UpdateAsync(user);
@@ -128,6 +130,8 @@ namespace Nonuso.Infrastructure.Auth.Services
                     return await BuildTokens(user);                   
                 }
             }
+
+            _logger.LogInformation("END SIGN IN");
 
             throw new AuthWrongCredentialException(_wrongCredentialMessage);
         }
