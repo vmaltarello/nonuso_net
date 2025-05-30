@@ -32,7 +32,13 @@ RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish -
 
 FROM base AS final
 WORKDIR /app
-RUN adduser --disabled-password --gecos "" app
-USER app
+
+# Copia l'applicazione pubblicata
 COPY --from=publish /app/publish .
+
+# Crea utente non-root e imposta permessi (l'utente 'appuser' esiste già nella base image)
+RUN chown -R appuser /app
+USER appuser
+
+# Entry point
 ENTRYPOINT ["dotnet", "Nonuso.Api.dll"]
