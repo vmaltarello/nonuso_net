@@ -429,6 +429,8 @@ sudo nginx -t
 # Verifica certificati SSL
 sudo certbot certificates
 
+usermod -aG docker $APP_USER
+
 log "Setup completato! Ricordati di:"
 log "1. Configurare il DNS per api.nonuso.com"
 log "2. Aggiornare le password di default"
