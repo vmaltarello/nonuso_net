@@ -106,7 +106,7 @@ services:
       - postgres_password
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-    entrypoint: ["bash", "-c", "ls -la /run/secrets && cat /run/secrets/db_connection && ./migrate.sh"]
+    entrypoint: ["bash", "-c", "chmod +x ./migrate.sh && ./migrate.sh"]
 
 volumes:
   postgres-data:
