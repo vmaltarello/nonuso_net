@@ -90,6 +90,25 @@ services:
       timeout: 5s
       retries: 5
 
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres
+    networks:
+      - nonuso-network
+    secrets:
+      - db_connection
+      - postgres_password
+      - redis_password
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    entrypoint: ["bash", "./migrate.sh"]
+
 volumes:
   postgres-data:
   redis-data:
