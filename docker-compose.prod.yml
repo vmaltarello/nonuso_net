@@ -90,10 +90,8 @@ services:
       timeout: 5s
       retries: 5
 
-  migrator:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+  migration:
+    image: mcr.microsoft.com/dotnet/sdk:9.0
     working_dir: /app
     volumes:
       - ./:/app
@@ -103,10 +101,13 @@ services:
       - nonuso-network
     secrets:
       - db_connection
+      - redis_connection
+      - jwt_secret
       - postgres_password
-      - redis_password
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - POSTGRES_DB=NonusoApp
+      - POSTGRES_USER=nonusouservm
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
     entrypoint: ["bash", "./migrate.sh"]
 
 volumes:
