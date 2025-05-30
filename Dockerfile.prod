@@ -1,15 +1,15 @@
-# Base runtime image per produzione
+# Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-slim AS base
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copy csproj files
 COPY ["Api/Nonuso.Api.csproj", "Api/"]
 COPY ["Application/Nonuso.Application.csproj", "Application/"]
 COPY ["Domain/Nonuso.Domain.csproj", "Domain/"]
@@ -22,32 +22,17 @@ COPY ["Infrastructure/Infrastructure.Storage/Nonuso.Infrastructure.Storage.cspro
 COPY ["Infrastructure/Infrastructure.Notification/Nonuso.Infrastructure.Notification.csproj", "Infrastructure/Infrastructure.Notification/"]
 COPY ["Infrastructure/Infrastructure.Redis/Nonuso.Infrastructure.Redis.csproj", "Infrastructure/Infrastructure.Redis/"]
 
-# Restore dependencies
 RUN dotnet restore "Api/Nonuso.Api.csproj"
-
-# Copy source code
 COPY . .
 WORKDIR "/src/Api"
-
-# Build in Release mode
 RUN dotnet build "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Publish stage
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-restore --no-build /p:UseAppHost=false
 
-# Final stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-slim AS final
+FROM base AS final
 WORKDIR /app
-
-# Copia l'applicazione pubblicata
+RUN adduser --disabled-password --gecos "" app
+USER app
 COPY --from=publish /app/publish .
-
-# Crea utente non-root
-RUN adduser --disabled-password --gecos "" appuser && \
-    chown -R appuser /app
-USER appuser
-
-# Entry point
 ENTRYPOINT ["dotnet", "Nonuso.Api.dll"]

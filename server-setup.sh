@@ -25,7 +25,7 @@ warn() {
     echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
-# Verifica se lo script Ã¨ eseguito come root
+# Verifica se lo script è eseguito come root
 if [ "$EUID" -ne 0 ]; then 
     error "Questo script deve essere eseguito come root"
 fi
@@ -94,40 +94,24 @@ if [ ! -f "/root/github_actions_key" ]; then
     rm /root/github_actions_key.pub.bak
     chmod 600 /root/github_actions_key
     chmod 644 /root/github_actions_key.pub
-    log "Chiave SSH generata. Aggiungi questa chiave pubblica a GitHub Actions secrets (VPS_SSH_KEY):"
+    # Mostra la chiave PRIVATA da aggiungere ai secrets di GitHub Actions
+    log "Chiave SSH PRIVATA generata. Aggiungi QUESTA chiave a GitHub Actions secrets (VPS_SSH_KEY):"
     echo -e "${YELLOW}"
-    cat /root/github_actions_key.pub
+    cat /root/github_actions_key
     echo -e "${NC}"
 fi
 
-# Aggiungi la chiave pubblica all'utente unonuso
-cat /root/github_actions_key.pub >> /home/$APP_USER/.ssh/authorized_keys
-chown $APP_USER:$APP_GROUP /home/$APP_USER/.ssh/authorized_keys
-chmod 600 /home/$APP_USER/.ssh/authorized_keys
-
-# Crea script per aggiungere chiavi SSH
-cat > /usr/local/bin/add-ssh-key << 'EOF'
-#!/bin/bash
-
-if [ "$EUID" -ne 0 ]; then 
-    echo "Questo script deve essere eseguito come root"
-    exit 1
+# Aggiungi la chiave pubblica all'authorized_keys dell'utente unonuso
+if [ -f "/root/github_actions_key.pub" ]; then
+    log "Aggiunta chiave pubblica all'utente unonuso..."
+    mkdir -p /home/unonuso/.ssh
+    cat /root/github_actions_key.pub >> /home/unonuso/.ssh/authorized_keys
+    chown -R unonuso:unonuso /home/unonuso/.ssh
+    chmod 700 /home/unonuso/.ssh
+    chmod 600 /home/unonuso/.ssh/authorized_keys
+    log "Chiave pubblica aggiunta e permessi impostati."
 fi
 
-if [ -z "$1" ]; then
-    echo "Uso: add-ssh-key <chiave_pubblica>"
-    exit 1
-fi
-
-echo "$1" >> /home/unonuso/.ssh/authorized_keys
-chown unonuso:unonuso /home/unonuso/.ssh/authorized_keys
-chmod 600 /home/unonuso/.ssh/authorized_keys
-echo "Chiave SSH aggiunta con successo"
-EOF
-
-chmod +x /usr/local/bin/add-ssh-key
-
-# Messaggi finali per l'utente
 log "Setup SSH completato!"
 echo -e "\n${YELLOW}IMPORTANTE:${NC}"
 echo "1. Per aggiungere una nuova chiave SSH, usa:"
@@ -137,7 +121,6 @@ echo "   /root/github_actions_key.pub"
 echo "3. Dopo aver configurato tutte le chiavi necessarie, puoi disabilitare l'accesso con password:"
 echo "   sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config"
 echo "   sudo systemctl restart sshd"
-
 # =============================================
 # 1. Aggiornamento Sistema e Installazione Pacchetti Base
 # =============================================
@@ -227,16 +210,16 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 sudo usermod -aG docker $USER
 
 # =============================================
-# 4. Configurazione Nginx
+# 4. Configurazione Nginx e Let's Encrypt (Sequenza Corretta)
 # =============================================
-log "Configurazione di Nginx..."
+log "Configurazione di Nginx e Let's Encrypt..."
 
 # Crea directory necessarie
 sudo mkdir -p /etc/nginx/ssl
 sudo mkdir -p /etc/nginx/sites-available
 sudo mkdir -p /etc/nginx/sites-enabled
 
-# Copia configurazioni Nginx
+# Copia configurazioni Nginx (incluse le direttive SSL che punteranno ai file che Certbot creerà)
 sudo tee /etc/nginx/nginx.conf > /dev/null << 'EOL'
 user www-data;
 worker_processes auto;
@@ -282,8 +265,9 @@ sudo tee /etc/nginx/sites-available/api.nonuso.com > /dev/null << 'EOL'
 server {
     listen 80;
     server_name api.nonuso.com;
-    
+
     location / {
+        # Reindirizza a HTTPS - questo sarà attivo solo dopo che Certbot avrà ottenuto il certificato
         return 301 https://$host$request_uri;
     }
 }
@@ -292,17 +276,18 @@ server {
     listen 443 ssl http2;
     server_name api.nonuso.com;
 
+    # Questi path verranno creati da Certbot
     ssl_certificate /etc/letsencrypt/live/api.nonuso.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/api.nonuso.com/privkey.pem;
-    
+
     # SSL configuration
     ssl_session_timeout 1d;
     ssl_session_cache shared:SSL:50m;
     ssl_session_tickets off;
-    
+
     # HSTS (uncomment if you're sure)
     # add_header Strict-Transport-Security "max-age=63072000" always;
-    
+
     # Proxy settings
     location / {
         proxy_pass http://localhost:5000;
@@ -321,19 +306,27 @@ EOL
 # Abilita il sito
 sudo ln -sf /etc/nginx/sites-available/api.nonuso.com /etc/nginx/sites-enabled/
 
-# Riavvia Nginx
-sudo systemctl restart nginx
+# FERMA Nginx per permettere a Certbot di usare la porta 80 in modalità standalone
+log "Fermando Nginx per Certbot (modalità standalone)..."
+sudo systemctl stop nginx || true # Permetti che fallisca se non è già attivo
 
-# =============================================
-# 5. Configurazione Let's Encrypt
-# =============================================
-log "Configurazione di Let's Encrypt..."
+# Ottieni certificato SSL con Certbot in modalità standalone
+# Assumendo che il DNS punti già al server
+log "Ottenendo certificato SSL con Certbot (standalone)..."
+sudo certbot certonly --standalone -d api.nonuso.com --non-interactive --agree-tos -m vmaltarello@gmail.com \
+    || { error "Errore critico: Certificato Let's Encrypt non ottenuto. Controlla il DNS e i log di Certbot (/var/log/letsencrypt/)."; }
 
-# Ottieni certificato SSL
-sudo certbot --nginx -d api.nonuso.com --non-interactive --agree-tos --email vmaltarello@gmail.com
+# Avvia Nginx (ora i certificati dovrebbero esistere)
+log "Avviando Nginx..."
+sudo systemctl start nginx \
+    || { error "Errore critico: Impossibile avviare Nginx. Controlla i log di Nginx (journalctl -xeu nginx.service)."; }
 
-# Configura rinnovo automatico
-echo "0 0 * * * root certbot renew --quiet" | sudo tee -a /etc/crontab > /dev/null
+sudo systemctl enable nginx # Assicura che Nginx parta all'avvio
+
+# Configura rinnovo automatico (Certbot gestisce già il cronjob con l'installazione)
+log "Rinnovo automatico Certbot configurato."
+
+log "Configurazione Nginx e Certbot completata!"
 
 # =============================================
 # 6. Configurazione Backup
@@ -442,4 +435,4 @@ log "2. Aggiornare le password di default"
 log "3. Configurare i backup"
 log "4. Verificare i log per eventuali errori"
 
-log "Il server Ã¨ pronto per il deployment!" 
+log "Il server è pronto per il deployment!" 
