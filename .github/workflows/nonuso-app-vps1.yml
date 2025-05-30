@@ -60,6 +60,8 @@ jobs:
           --exclude '.git' \
           --exclude 'node_modules' \
           --exclude '*.tar.gz' \
+          --exclude 'bin/' \
+          --exclude 'obj/' \
           -e "ssh -i ~/.ssh/deploy_key" \
           ./ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
 
