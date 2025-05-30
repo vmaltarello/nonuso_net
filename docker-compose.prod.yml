@@ -103,11 +103,6 @@ services:
       - db_connection
       - redis_connection
       - jwt_secret
-      - postgres_password
-    environment:
-      - POSTGRES_DB=NonusoApp
-      - POSTGRES_USER=nonusouservm
-      - POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password)
     entrypoint: ["bash", "./migrate.sh"]
 
 volumes:
