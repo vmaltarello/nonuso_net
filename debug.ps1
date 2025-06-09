@@ -18,11 +18,9 @@ docker-compose -f docker-compose.debug.yml down
 Write-Host "Pulizia immagini non utilizzate..." -ForegroundColor Yellow
 docker system prune -f
 
-Write-Host "Building container di debug..." -ForegroundColor Yellow
-docker-compose -f docker-compose.debug.yml build --no-cache webapp
 
 Write-Host "Avvio servizi..." -ForegroundColor Green
-docker-compose -f docker-compose.debug.yml up -d
+docker-compose -f docker-compose.debug.yml up -d --build
 
 Write-Host "Attendendo che i servizi siano pronti..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10

@@ -2,8 +2,8 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 ENV ASPNETCORE_ENVIRONMENT=Development
+ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
@@ -23,7 +23,6 @@ COPY ["Infrastructure/Infrastructure.Storage/Nonuso.Infrastructure.Storage.cspro
 COPY ["Infrastructure/Infrastructure.Notification/Nonuso.Infrastructure.Notification.csproj", "Infrastructure/Infrastructure.Notification/"]
 COPY ["Infrastructure/Infrastructure.Redis/Nonuso.Infrastructure.Redis.csproj", "Infrastructure/Infrastructure.Redis/"]
 
-# Restore dependencies
 RUN dotnet restore "Api/Nonuso.Api.csproj"
 
 # Copy source code
@@ -31,33 +30,17 @@ COPY . .
 WORKDIR "/src/Api"
 
 # Build in Debug mode
-RUN dotnet build "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
-# Publish stage
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Debug
 RUN dotnet publish "Nonuso.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Final stage (usando SDK per debugging)
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS final
+FROM base AS final
 WORKDIR /app
 
-# Installa strumenti per debugging
-ENV PATH="${PATH}:/root/.dotnet/tools"
-RUN dotnet tool install -g dotnet-ef --version 9.0.0
-
-# Installa il debugger di Visual Studio
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends unzip procps curl \
-    && curl -sSL https://aka.ms/getvsdbgsh | /bin/sh /dev/stdin -v latest -l /vsdbg \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copia l'applicazione pubblicata
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 
-# Verifica che la directory secrets sia disponibile (opzionale per debug)
-RUN echo "Secrets directory setup completed"
+RUN adduser --disabled-password --gecos "" dotnetappuser && \
+    chown -R dotnetappuser /app
+USER dotnetappuser
 
 # Configura l'entry point per il debugging
 ENTRYPOINT ["dotnet", "Nonuso.Api.dll"]

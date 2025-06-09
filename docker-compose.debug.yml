@@ -8,10 +8,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - DOTNET_USE_POLLING_FILE_WATCHER=true
-      - ASPNETCORE_LOGGING__CONSOLE__DISABLECOLORS=true
-    volumes:
-      - .:/src
     ports:
       - "8080:8080"
     secrets:
@@ -52,9 +48,9 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nonusouservm -d NonusoApp"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
-      retries: 10
+      retries: 3
       start_period: 60s
 
   migration:
@@ -104,6 +100,8 @@ secrets:
     file: ./secrets/postgres_password.txt
   redis_connection:
     file: ./secrets/redis_connection.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
   s3_access_key:

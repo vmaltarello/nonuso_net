@@ -104,7 +104,7 @@ namespace Nonuso.Infrastructure.Auth.Services
                 {
                     var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     var encodedToken = WebUtility.UrlEncode(token);
-                    var tokenConfirmEmail = $"http://localhost:5227/api/auth/confirmEmail?token={encodedToken}&email={model.Email}";
+                    var tokenConfirmEmail = $"nonuso.app://confirmEmail?token={encodedToken}&email={model.Email}";
                     await _oneSignalService.SendConfirmEmailAsync(user, tokenConfirmEmail);
                 }
             }

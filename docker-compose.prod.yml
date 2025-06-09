@@ -86,7 +86,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "$(cat /run/secrets/redis_password)", "ping"]
-      interval: 10s
+      interval: 60s
       timeout: 5s
       retries: 5
 

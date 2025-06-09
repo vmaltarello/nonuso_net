@@ -4,17 +4,18 @@ using Nonuso.Common;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
-using Nonuso.Domain.Models;
 using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.Services
 {
     internal class ChatService(
         IMapper mapper,
-        IChatRepository chatRepository) : IChatService
+        IChatRepository chatRepository,
+        INotificationService notificationService) : IChatService
     {
         readonly IMapper _mapper = mapper;
         readonly IChatRepository _chatRepository = chatRepository;
+        readonly INotificationService _notificationService = notificationService;
 
         public async Task<MessageResultModel> CreateAsync(MessageParamModel model)
         {
@@ -23,6 +24,19 @@ namespace Nonuso.Application.Services
             await _chatRepository.CreateAsync(entity);
 
             var result = await _chatRepository.GetMessageById(entity.Id, model.SenderId);
+
+            var otherUser = await _chatRepository.GetChatWithUserByConversationIdAsync(model.ConversationId, model.SenderId);
+
+            if (otherUser != null) 
+            {
+                await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
+                {
+                    UserId = otherUser.Id,
+                    Content = model.Content ?? string.Empty,
+                    ProductRequestId = entity.Conversation!.ProductRequestId,
+                    UserName = otherUser.UserName ?? string.Empty,
+                });
+            }
 
             return _mapper.Map<MessageResultModel>(result);
         }

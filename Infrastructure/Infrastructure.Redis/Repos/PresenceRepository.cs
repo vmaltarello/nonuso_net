@@ -1,11 +1,26 @@
-﻿using Nonuso.Domain.IRepos;
+﻿using Microsoft.Extensions.Logging;
+using Nonuso.Domain.IRepos;
 using StackExchange.Redis;
 
 namespace Nonuso.Infrastructure.Redis.Repos
 {
-    internal class PresenceRepository(IConnectionMultiplexer redis) : IPresenceRepository
+    internal class PresenceRepository(IConnectionMultiplexer redis, ILogger<PresenceRepository> logger) : IPresenceRepository
     {
         private readonly IDatabase _dbRedis = redis.GetDatabase();
+        private readonly ILogger<PresenceRepository> _logger = logger; 
+
+        public async Task GetUserPresenceAsync(Guid userId)
+        {
+            var userPresence = await _dbRedis.HashGetAllAsync(key: userId.ToString());
+
+
+            if (userPresence?.Length > 0) 
+            {
+                _logger.LogInformation($"FROM REDIS PRESENCE ", userPresence[0]);
+                _logger.LogInformation($"FROM REDIS PRESENCE ", userPresence[1]);
+
+            }
+        }
 
         public async Task SetUserOfflineAsync(Guid userId)
         {
