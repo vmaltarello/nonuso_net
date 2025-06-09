@@ -17,10 +17,6 @@ namespace Nonuso.Infrastructure.Redis.Repos
             {
                 _logger.LogInformation("FROM REDIS PRESENCE [0]: {Value}", userPresence[0]);
                 _logger.LogInformation("FROM REDIS PRESENCE [1]: {Value}", userPresence[1]);
-
-                // O tutti insieme
-                _logger.LogInformation("FROM REDIS PRESENCE: {Value0} | {Value1}",
-                    userPresence[0], userPresence[1]);
             }
         }
 

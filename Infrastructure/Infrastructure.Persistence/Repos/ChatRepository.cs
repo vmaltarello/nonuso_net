@@ -21,7 +21,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 .Where(x => x.ProductRequest != null
                             && x.Id == id)
                 .Select(x => 
-                    x.ProductRequest!.RequestedId == userId ? x.ProductRequest!.RequestedUser! : x.ProductRequest!.RequesterUser!
+                    x.ProductRequest!.RequestedId == userId ? x.ProductRequest!.RequesterUser! : x.ProductRequest!.RequestedUser!
                 ).FirstOrDefaultAsync();
         }
 

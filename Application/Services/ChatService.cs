@@ -27,7 +27,7 @@ namespace Nonuso.Application.Services
 
             var otherUser = await _chatRepository.GetChatWithUserByConversationIdAsync(model.ConversationId, model.SenderId);
 
-            if (otherUser != null) 
+            if (otherUser != null)
             {
                 await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
                 {

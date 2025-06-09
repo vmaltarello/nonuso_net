@@ -1,12 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Nonuso.Application.IServices;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
 using Nonuso.Infrastructure.Secret;
 using Nonuso.Messages.Api;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -20,17 +18,14 @@ namespace Nonuso.Infrastructure.Notification.Services
         readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
         readonly IPresenceRepository _presenceRepository;
         readonly (string RestApiKey, string AppId) _oneSignalSettings;
-        readonly ILogger<NotificationService> _logger;
 
         public NotificationService(HttpClient httpClient,
             ISecretManager secretManager,
             IConfiguration configuration,
-            IPresenceRepository presenceRepository,
-            ILogger<NotificationService> logger)
+            IPresenceRepository presenceRepository)
         {
             _httpClient = httpClient;
             _configuration = configuration;
-            _logger = logger;
 
             _oneSignalSettings = secretManager.GetOneSignalSettings();
 
@@ -82,29 +77,7 @@ namespace Nonuso.Infrastructure.Notification.Services
             var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
             var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("notification sent successfully. Response: {Response}",
-                    responseContent);
-            }
-            else
-            {
-                _logger.LogError("notification failed. Status: {Status}, Response: {Response}",
-                    response.StatusCode, responseContent);
-
-                if (response.StatusCode == HttpStatusCode.BadRequest)
-                {
-                    _logger.LogError("BadRequest details - Headers: {Headers}, Payload: {Payload}",
-                        string.Join(", ", _httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")),
-                        json);
-                }
-
-            }
-
+            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);    
         }
     }
 }
