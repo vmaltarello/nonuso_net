@@ -13,7 +13,6 @@ namespace Nonuso.Infrastructure.Redis.Repos
         {
             var userPresence = await _dbRedis.HashGetAllAsync(key: userId.ToString());
 
-
             if (userPresence?.Length > 0)
             {
                 _logger.LogInformation("FROM REDIS PRESENCE [0]: {Value}", userPresence[0]);

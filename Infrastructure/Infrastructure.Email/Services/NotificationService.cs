@@ -59,11 +59,11 @@ namespace Nonuso.Infrastructure.Notification.Services
             var payload = new
             {
                 app_id = _appId,
-                include_aliases = new { external_id = model.UserId.ToString() },
+                include_aliases = new { external_id = new string[] { model.UserId.ToString() } },
                 headings = new { en = $"{model.UserName}" },
                 contents = new { en = model.Content },
                 target_channel = "push",
-                data = new { requestId = model.ProductRequestId }
+                //data = new { requestId = model.ProductRequestId }
             };
 
             var json = JsonConvert.SerializeObject(payload);
