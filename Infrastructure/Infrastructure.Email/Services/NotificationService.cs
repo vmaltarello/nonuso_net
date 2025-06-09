@@ -20,13 +20,13 @@ namespace Nonuso.Infrastructure.Notification.Services
         readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
         readonly IPresenceRepository _presenceRepository;
         readonly (string RestApiKey, string AppId) _oneSignalSettings;
-        readonly Logger<NotificationService> _logger;
+        readonly ILogger<NotificationService> _logger;
 
         public NotificationService(HttpClient httpClient,
             ISecretManager secretManager,
             IConfiguration configuration,
             IPresenceRepository presenceRepository,
-            Logger<NotificationService> logger)
+            ILogger<NotificationService> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
