@@ -31,7 +31,9 @@ namespace Nonuso.Application.Services
             {
                 await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
                 {
-                    UserId = otherUser.Id                   
+                    UserId = otherUser.Id,
+                    Content = model.Content,
+                    UserName = otherUser.UserName!                    
                 });
             }
 
