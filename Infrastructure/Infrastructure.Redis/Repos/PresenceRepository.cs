@@ -14,11 +14,14 @@ namespace Nonuso.Infrastructure.Redis.Repos
             var userPresence = await _dbRedis.HashGetAllAsync(key: userId.ToString());
 
 
-            if (userPresence?.Length > 0) 
+            if (userPresence?.Length > 0)
             {
-                _logger.LogInformation($"FROM REDIS PRESENCE ", userPresence[0]);
-                _logger.LogInformation($"FROM REDIS PRESENCE ", userPresence[1]);
+                _logger.LogInformation("FROM REDIS PRESENCE [0]: {Value}", userPresence[0]);
+                _logger.LogInformation("FROM REDIS PRESENCE [1]: {Value}", userPresence[1]);
 
+                // O tutti insieme
+                _logger.LogInformation("FROM REDIS PRESENCE: {Value0} | {Value1}",
+                    userPresence[0], userPresence[1]);
             }
         }
 
