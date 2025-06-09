@@ -1,33 +1,43 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Nonuso.Application.IServices;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
 using Nonuso.Infrastructure.Secret;
 using Nonuso.Messages.Api;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+
 namespace Nonuso.Infrastructure.Notification.Services
 {
     internal class NotificationService : INotificationService
     {
         readonly HttpClient _httpClient;
         readonly IConfiguration _configuration;
-        private readonly string _appId;
-        private readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
+        readonly string _appId;
+        readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
         readonly IPresenceRepository _presenceRepository;
+        readonly (string RestApiKey, string AppId) _oneSignalSettings;
+        readonly Logger<NotificationService> _logger;
 
         public NotificationService(HttpClient httpClient,
             ISecretManager secretManager,
             IConfiguration configuration,
-            IPresenceRepository presenceRepository)
+            IPresenceRepository presenceRepository,
+            Logger<NotificationService> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _logger = logger;
+
+            _oneSignalSettings = secretManager.GetOneSignalSettings();
+
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", secretManager.GetOneSignalSettings().RestApiKey);
-            _appId = secretManager.GetOneSignalSettings().AppId;
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _oneSignalSettings.RestApiKey);
+            _appId = _oneSignalSettings.AppId;
             _presenceRepository = presenceRepository;
         }
 
@@ -41,7 +51,7 @@ namespace Nonuso.Infrastructure.Notification.Services
                 target_channel = "email",
                 email_subject = "Conferma la tua email",
                 include_email_tokens = new string[] { user.Email! },
-                custom_data = new 
+                custom_data = new
                 {
                     action_link = tokenConfirmEmail,
                     username = user.UserName,
@@ -55,20 +65,46 @@ namespace Nonuso.Infrastructure.Notification.Services
 
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
         {
+
             await _presenceRepository.GetUserPresenceAsync(model.UserId);
             var payload = new
             {
                 app_id = _appId,
                 include_aliases = new { external_id = new string[] { model.UserId.ToString() } },
-                headings = new { en = $"{model.UserName}" },
+                headings = new { en = model.UserName },
                 contents = new { en = model.Content },
                 target_channel = "push",
+                ios_badgeType = "Increase", // Only for iOS
+                ios_badgeCount = 1
                 //data = new { requestId = model.ProductRequestId }
             };
 
-            var json = JsonConvert.SerializeObject(payload);
+            var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
             var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
-            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
+
+            var response = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("notification sent successfully. Response: {Response}",
+                    responseContent);
+            }
+            else
+            {
+                _logger.LogError("notification failed. Status: {Status}, Response: {Response}",
+                    response.StatusCode, responseContent);
+
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    _logger.LogError("BadRequest details - Headers: {Headers}, Payload: {Payload}",
+                        string.Join(", ", _httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")),
+                        json);
+                }
+
+            }
+
         }
     }
 }
