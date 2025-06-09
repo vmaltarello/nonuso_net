@@ -3,8 +3,8 @@
     public class PusNotificationParamModel
     {
         public required Guid UserId { get; set; }
-        public required string UserName { get; set; }
-        public required string Content { get; set; }
-        public required Guid ProductRequestId { get; set; }
+        public string UserName { get; set; }
+        public string Content { get; set; }
+        public Guid ProductRequestId { get; set; }
     }
 }

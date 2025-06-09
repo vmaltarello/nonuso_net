@@ -31,10 +31,7 @@ namespace Nonuso.Application.Services
             {
                 await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
                 {
-                    UserId = otherUser.Id,
-                    Content = model.Content ?? string.Empty,
-                    ProductRequestId = entity.Conversation!.ProductRequestId,
-                    UserName = otherUser.UserName ?? string.Empty,
+                    UserId = otherUser.Id                   
                 });
             }
 
