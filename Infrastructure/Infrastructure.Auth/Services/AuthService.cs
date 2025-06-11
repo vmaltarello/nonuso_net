@@ -112,8 +112,6 @@ namespace Nonuso.Infrastructure.Auth.Services
 
         public async Task<UserResultModel> SignInAsync(UserSignInParamModel model)
         {
-            _logger.LogInformation("START SIGN IN");
-
             var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false);
             
             if (result.Succeeded)
@@ -130,8 +128,6 @@ namespace Nonuso.Infrastructure.Auth.Services
                     return await BuildTokens(user);                   
                 }
             }
-
-            _logger.LogInformation("END SIGN IN");
 
             throw new AuthWrongCredentialException(_wrongCredentialMessage);
         }

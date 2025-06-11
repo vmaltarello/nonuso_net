@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using FluentValidation;
 using NetTopologySuite.Geometries;
-using NetTopologySuite.Index.HPRtree;
 using Nonuso.Application.IServices;
 using Nonuso.Common;
 using Nonuso.Common.Filters;
@@ -133,6 +132,12 @@ namespace Nonuso.Application.Services
             await _storageService.RemoveProductImagesAsync([], entity.Id);
 
             await _productRepository.DeleteAsync(entity);
+        }
+
+        public async Task Report(ReportProductParamModel model)
+        {
+            var entity = _mapper.Map<ProductReport>(model);
+            await _productRepository.Report(entity);
         }
     }
 }

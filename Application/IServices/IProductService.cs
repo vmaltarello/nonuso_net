@@ -12,5 +12,6 @@ namespace Nonuso.Application.IServices
         Task CreateAsync(ProductParamModel model);
         Task UpdateAsync(EditProductParamModel model);
         Task DeleteAsync(Guid id, Guid userId);
+        Task Report(ReportProductParamModel model);
     }
 }

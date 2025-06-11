@@ -14,5 +14,6 @@ namespace Nonuso.Domain.IRepos
         Task CreateAsync(Product entity);
         Task UpdateAsync(Product entity);
         Task DeleteAsync(Product entity);
+        Task Report(ProductReport entity);
     }
 }

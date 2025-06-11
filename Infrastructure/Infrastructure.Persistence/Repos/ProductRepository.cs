@@ -159,5 +159,11 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task Report(ProductReport entity) 
+        {
+            _context.ProductReport.Add(entity);
+            await _context.SaveChangesAsync();
+        }
     }
 }

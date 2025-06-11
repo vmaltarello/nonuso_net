@@ -30,7 +30,7 @@ namespace Nonuso.Domain.Entities
 
         [Required]
         [StringLength(255)]
-        public string LocationName { get; set; } = string.Empty;
+        public required string LocationName { get; set; }
 
         public NpgsqlTsVector SearchVector { get; set; } = null!;
 

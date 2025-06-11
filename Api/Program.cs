@@ -52,7 +52,7 @@ app.SetupSwagger();
 
 app.UseMiddleware<ApiExceptionHandler>();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors(builder => builder
                 .AllowAnyOrigin()

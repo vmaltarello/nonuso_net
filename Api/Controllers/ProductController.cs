@@ -70,5 +70,15 @@ namespace Nonuso.Api.Controllers
             await _productService.DeleteAsync(id, _currentUser.Id);
             return NoContent();
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Report(ReportProductParamModel model)
+        {
+            model.UserId = _currentUser.Id;
+
+            await _productService.Report(model);
+            return NoContent();
+        }
     }
 }

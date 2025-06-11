@@ -14,8 +14,8 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(NonusoDbContext))]
-    [Migration("20250528092122_Init")]
-    partial class Init
+    [Migration("20250610102251_Migration_0")]
+    partial class Migration_0
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,21 +58,21 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("8821f3d9-fe96-4404-9c2f-8830a043a931"),
-                            ConcurrencyStamp = "65281764-0a8c-4eac-892e-d5f0bf888470",
+                            ConcurrencyStamp = "3E55B188-F822-4BDE-B1CC-96BF79C74797",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
                             Id = new Guid("aa5334f3-837d-4f65-9ecc-8e471def97e6"),
-                            ConcurrencyStamp = "365ac856-70d5-461d-8c39-a69654e2cfc7",
+                            ConcurrencyStamp = "937118E8-A1EA-41DD-8FE7-F47CBDC27FB2",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("9302b5a3-d93b-4152-bd75-9f9ae7e9ff83"),
-                            ConcurrencyStamp = "8ee32c87-ab72-4a0e-b7aa-e7872fa38e64",
+                            ConcurrencyStamp = "C2A9E755-4A7F-46F2-B36E-364E86DF6DEC",
                             Name = "Business",
                             NormalizedName = "BUSINESS"
                         });
@@ -592,6 +592,43 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.ToTable("ProductHistory");
                 });
 
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Reason")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProductReport");
+                });
+
             modelBuilder.Entity("Nonuso.Domain.Entities.ProductRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -939,6 +976,25 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.ProductReport", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
 
                     b.Navigation("User");
                 });

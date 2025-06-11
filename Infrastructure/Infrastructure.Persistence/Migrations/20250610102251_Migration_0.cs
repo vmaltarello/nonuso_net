@@ -11,7 +11,7 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class Migration_0 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -312,6 +312,36 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ProductReport",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Reason = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductReport", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductReport_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProductReport_Product_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Product",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ProductRequest",
                 columns: table => new
                 {
@@ -466,9 +496,9 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { new Guid("8821f3d9-fe96-4404-9c2f-8830a043a931"), "65281764-0a8c-4eac-892e-d5f0bf888470", "User", "USER" },
-                    { new Guid("9302b5a3-d93b-4152-bd75-9f9ae7e9ff83"), "8ee32c87-ab72-4a0e-b7aa-e7872fa38e64", "Business", "BUSINESS" },
-                    { new Guid("aa5334f3-837d-4f65-9ecc-8e471def97e6"), "365ac856-70d5-461d-8c39-a69654e2cfc7", "Admin", "ADMIN" }
+                    { new Guid("8821f3d9-fe96-4404-9c2f-8830a043a931"), "3E55B188-F822-4BDE-B1CC-96BF79C74797", "User", "USER" },
+                    { new Guid("9302b5a3-d93b-4152-bd75-9f9ae7e9ff83"), "C2A9E755-4A7F-46F2-B36E-364E86DF6DEC", "Business", "BUSINESS" },
+                    { new Guid("aa5334f3-837d-4f65-9ecc-8e471def97e6"), "937118E8-A1EA-41DD-8FE7-F47CBDC27FB2", "Admin", "ADMIN" }
                 });
 
             migrationBuilder.InsertData(
@@ -610,6 +640,16 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProductReport_ProductId",
+                table: "ProductReport",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductReport_UserId",
+                table: "ProductReport",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProductRequest_ExchangeProductId",
                 table: "ProductRequest",
                 column: "ExchangeProductId");
@@ -682,6 +722,9 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProductHistory");
+
+            migrationBuilder.DropTable(
+                name: "ProductReport");
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");

@@ -8,9 +8,12 @@ namespace Nonuso.Infrastructure.Persistence
 {
     public class NonusoDbContext(DbContextOptions<NonusoDbContext> options) : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options)
     {
+        #region DBSET
+
         public DbSet<Category> Category { get; set; }
         public DbSet<Favorite> Favorite { get; set; }
         public DbSet<Product> Product { get; set; }
+        public DbSet<ProductReport> ProductReport { get; set; }
         public DbSet<ProductHistory> ProductHistory { get; set; }
         public DbSet<LastSearch> LastSearch { get; set; }
         public DbSet<RefreshToken> RefreshToken { get; set; }
@@ -19,6 +22,8 @@ namespace Nonuso.Infrastructure.Persistence
         public DbSet<Message> Message { get; set; }
         public DbSet<ConversationInfo> ConversationInfo { get; set; }
         public DbSet<UserBlock> UserBlock { get; set; }
+
+        #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

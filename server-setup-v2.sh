@@ -1,0 +1,1096 @@
+﻿#!/bin/bash
+
+# =============================================
+# NONUSO.NET PRODUCTION SERVER HARDENING SCRIPT
+# Version: 2.0 - Production Grade
+# =============================================
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# =============================================
+# VARIABILI GLOBALI
+# =============================================
+
+# Colori per output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly PURPLE='\033[0;35m'
+readonly NC='\033[0m'
+
+# Configurazione base
+readonly APP_USER="unonuso"
+readonly APP_GROUP="unonuso"
+readonly APP_DIR="/home/${APP_USER}/nonuso_net"
+readonly BACKUP_DIR="/opt/nonuso-backups"
+readonly LOG_DIR="/var/log/nonuso"
+readonly DOMAIN="api.nonuso.com"
+readonly EMAIL="vmaltarello@gmail.com"
+readonly SSH_PORT="22847"
+
+# File di log
+readonly SETUP_LOG="/var/log/nonuso-setup.log"
+readonly SECURITY_REPORT="/root/nonuso-security-report.txt"
+
+# =============================================
+# FUNZIONI DI UTILITA
+# =============================================
+
+log() {
+    local level=$1
+    shift
+    local message="[$(date '+%Y-%m-%d %H:%M:%S')] [${level}] $*"
+    
+    case ${level} in
+        ERROR)   echo -e "${RED}${message}${NC}" | tee -a "${SETUP_LOG}" >&2 ;;
+        WARN)    echo -e "${YELLOW}${message}${NC}" | tee -a "${SETUP_LOG}" ;;
+        INFO)    echo -e "${GREEN}${message}${NC}" | tee -a "${SETUP_LOG}" ;;
+        SECURE)  echo -e "${PURPLE}${message}${NC}" | tee -a "${SETUP_LOG}" ;;
+        *)       echo -e "${message}" | tee -a "${SETUP_LOG}" ;;
+    esac
+}
+
+generate_secure_password() {
+    openssl rand -base64 32 | tr -d "=+/" | cut -c1-25
+}
+
+# =============================================
+# FASE 0: VERIFICA PREREQUISITI
+# =============================================
+
+check_prerequisites() {
+    log INFO "=== FASE 0: Verifica prerequisiti del sistema ==="
+    
+    if [[ $EUID -ne 0 ]]; then 
+        log ERROR "Questo script richiede privilegi root"
+        exit 1
+    fi
+    
+    if [[ ! -f /etc/os-release ]]; then
+        log ERROR "File /etc/os-release non trovato"
+        exit 1
+    fi
+    
+    source /etc/os-release
+    log INFO "Sistema rilevato: ${PRETTY_NAME}"
+    
+    if [[ "${ID}" != "ubuntu" ]] && [[ "${ID}" != "debian" ]]; then
+        log ERROR "Solo Ubuntu/Debian sono supportati"
+        exit 1
+    fi
+    
+    if ! ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
+        log ERROR "Connessione internet richiesta"
+        exit 1
+    fi
+    
+    local free_space=$(df / | awk 'NR==2 {print $4}')
+    if [[ ${free_space} -lt 5242880 ]]; then
+        log ERROR "Spazio insufficiente. Richiesti almeno 5GB liberi"
+        exit 1
+    fi
+    
+    log SECURE "Prerequisiti verificati"
+}
+
+# =============================================
+# FASE 1: SETUP SISTEMA BASE
+# =============================================
+
+setup_base_system() {
+    log INFO "=== FASE 1: Configurazione sistema base ==="
+    
+    # Imposta timezone
+    timedatectl set-timezone Europe/Rome
+    
+    # Aggiorna sistema
+    apt-get update && apt-get upgrade -y
+    
+    # Installa pacchetti essenziali
+    apt-get install -y \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+        software-properties-common \
+        git \
+        htop \
+        vim \
+        unzip \
+        zip \
+        net-tools \
+        rsync \
+        jq \
+        python3-pip \
+        build-essential \
+        ufw \
+        fail2ban \
+        nginx \
+        certbot \
+        python3-certbot-nginx
+    
+    log SECURE "Sistema base configurato"
+}
+
+# =============================================
+# FASE 2: HARDENING KERNEL
+# =============================================
+
+harden_kernel() {
+    log INFO "=== FASE 2: Hardening del kernel Linux ==="
+    
+    cp /etc/sysctl.conf "/etc/sysctl.conf.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    cat > /etc/sysctl.d/99-nonuso-security.conf << 'SYSCTL_EOF'
+# NONUSO.NET KERNEL SECURITY HARDENING
+
+# Protezione SYN flood
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_max_syn_backlog = 2048
+net.ipv4.tcp_synack_retries = 2
+
+# Network security
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.default.accept_source_route = 0
+
+# IP Spoofing protection
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+
+# ICMP security
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+
+# Memory protection
+kernel.randomize_va_space = 2
+kernel.yama.ptrace_scope = 1
+fs.suid_dumpable = 0
+kernel.kptr_restrict = 2
+kernel.dmesg_restrict = 1
+
+# File descriptors
+fs.file-max = 2097152
+
+# Disable timestamps
+net.ipv4.tcp_timestamps = 0
+SYSCTL_EOF
+
+    sysctl -p /etc/sysctl.d/99-nonuso-security.conf
+    
+    log SECURE "Kernel hardening completato"
+}
+
+# =============================================
+# FASE 3: CREAZIONE UTENTE SICURO
+# =============================================
+
+setup_secure_user() {
+    log INFO "=== FASE 3: Creazione utente applicazione sicuro ==="
+    
+    if ! getent group "${APP_GROUP}" > /dev/null; then
+        groupadd -r "${APP_GROUP}"
+    fi
+    
+    if ! id "${APP_USER}" &>/dev/null; then
+        useradd -m -s /bin/bash -g "${APP_GROUP}" "${APP_USER}"
+        usermod -L "${APP_USER}"
+        
+        local temp_pass=$(generate_secure_password)
+        echo "${APP_USER}:${temp_pass}" | chpasswd
+        
+        log SECURE "Utente ${APP_USER} creato con autenticazione SOLO via chiave SSH"
+    fi
+    
+    # Crea directory con permessi
+    local dirs=(
+        "${APP_DIR}:750"
+        "${APP_DIR}/secrets:700"
+        "${APP_DIR}/logs:750"
+        "${APP_DIR}/backups:700"
+        "${APP_DIR}/.ssh:700"
+        "/var/log/nonuso:750"
+    )
+    
+    for dir_perm in "${dirs[@]}"; do
+        local dir="${dir_perm%:*}"
+        local perm="${dir_perm#*:}"
+        
+        mkdir -p "${dir}"
+        chown "${APP_USER}:${APP_GROUP}" "${dir}"
+        chmod "${perm}" "${dir}"
+    done
+    
+    # Configura limiti risorse
+    cat > "/etc/security/limits.d/10-${APP_USER}.conf" << LIMITS_EOF
+${APP_USER} hard nofile 65536
+${APP_USER} hard nproc 2048
+${APP_USER} hard memlock 512000
+${APP_USER} hard core 0
+${APP_USER} soft nofile 32768
+${APP_USER} soft nproc 1024
+${APP_USER} soft memlock 256000
+${APP_USER} soft core 0
+LIMITS_EOF
+
+    # Configura sudo minimale
+    cat > "/etc/sudoers.d/10-${APP_USER}" << SUDO_EOF
+${APP_USER} ALL=(root) NOPASSWD: /usr/bin/docker ps, /usr/bin/docker logs *, /usr/bin/docker compose -f /home/${APP_USER}/nonuso_net/docker-compose.prod.yml *
+${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl restart nginx, /bin/systemctl status nginx
+Defaults:${APP_USER} log_input, log_output
+Defaults:${APP_USER} iolog_dir=/var/log/sudo-io/${APP_USER}
+SUDO_EOF
+    
+    chmod 440 "/etc/sudoers.d/10-${APP_USER}"
+    
+    if ! visudo -c -f "/etc/sudoers.d/10-${APP_USER}"; then
+        log ERROR "Configurazione sudo non valida!"
+        exit 1
+    fi
+    
+    log SECURE "Utente ${APP_USER} configurato con sicurezza"
+}
+
+# =============================================
+# FASE 4: SSH HARDENING
+# =============================================
+
+harden_ssh() {
+    log INFO "=== FASE 4: SSH Hardening ==="
+    
+    cp /etc/ssh/sshd_config "/etc/ssh/sshd_config.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    # Rigenera host keys
+    rm -f /etc/ssh/ssh_host_*
+    ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N "" < /dev/null
+    ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N "" < /dev/null
+    
+    # Genera chiave per GitHub Actions
+    local gh_key="/root/.ssh/github_actions_ed25519"
+    
+    if [[ ! -f "${gh_key}" ]]; then
+        mkdir -p /root/.ssh
+        chmod 700 /root/.ssh
+        ssh-keygen -t ed25519 -f "${gh_key}" -N "" -C "github-actions@nonuso.net" < /dev/null
+        chmod 600 "${gh_key}"
+        
+        mkdir -p "/home/${APP_USER}/.ssh"
+        cat "${gh_key}.pub" >> "/home/${APP_USER}/.ssh/authorized_keys"
+        chmod 700 "/home/${APP_USER}/.ssh"
+        chmod 600 "/home/${APP_USER}/.ssh/authorized_keys"
+        chown -R "${APP_USER}:${APP_GROUP}" "/home/${APP_USER}/.ssh"
+    fi
+    
+    cat > /etc/ssh/sshd_config << SSH_EOF
+# NONUSO.NET SSH CONFIGURATION
+
+Port ${SSH_PORT}
+AddressFamily inet
+ListenAddress 0.0.0.0
+Protocol 2
+
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+LoginGraceTime 30
+PermitRootLogin no
+StrictModes yes
+MaxAuthTries 3
+MaxSessions 2
+
+PubkeyAuthentication yes
+PasswordAuthentication yes
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+
+AuthorizedKeysFile .ssh/authorized_keys
+
+HostbasedAuthentication no
+IgnoreRhosts yes
+GSSAPIAuthentication no
+
+AllowUsers ${APP_USER}
+
+X11Forwarding no
+AllowTcpForwarding no
+AllowAgentForwarding no
+PermitTunnel no
+
+Compression delayed
+UseDNS no
+TCPKeepAlive yes
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+MaxStartups 10:30:60
+
+PrintMotd no
+PrintLastLog yes
+Subsystem sftp /usr/lib/openssh/sftp-server -f AUTHPRIV -l INFO
+
+Banner /etc/ssh/banner.txt
+SSH_EOF
+
+    cat > /etc/ssh/banner.txt << 'BANNER_EOF'
+******************************************************************************
+                            AVVISO DI SICUREZZA
+
+Questo sistema e riservato agli utenti autorizzati. Accesso non autorizzato
+e proibito e sara perseguito secondo la legge. Tutte le attivita sono
+monitorate e registrate.
+
+                          UNAUTHORIZED ACCESS FORBIDDEN
+******************************************************************************
+BANNER_EOF
+
+    if ! sshd -t; then
+        log ERROR "Configurazione SSH non valida!"
+        mv /etc/ssh/sshd_config.backup.* /etc/ssh/sshd_config
+        exit 1
+    fi
+    
+    log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log WARN "ATTENZIONE: La porta SSH cambiera a ${SSH_PORT}"
+    log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    echo
+    echo -e "${YELLOW}══════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}CHIAVE SSH PER GITHUB ACTIONS (VPS_SSH_KEY):${NC}"
+    echo -e "${YELLOW}══════════════════════════════════════════════════════${NC}"
+    cat "${gh_key}"
+    echo -e "${YELLOW}══════════════════════════════════════════════════════${NC}"
+    echo
+    
+    echo "GitHub Actions SSH Key:" >> "${SECURITY_REPORT}"
+    cat "${gh_key}" >> "${SECURITY_REPORT}"
+    echo "" >> "${SECURITY_REPORT}"
+    
+    log SECURE "SSH hardening completato"
+}
+
+# =============================================
+# FASE 5: FIREWALL
+# =============================================
+
+setup_firewall() {
+    log INFO "=== FASE 5: Configurazione Firewall ==="
+    
+    # Reset UFW
+    ufw --force disable
+    ufw --force reset
+    
+    # Default policies
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw default deny forward
+    
+    # Regole
+    ufw allow ${SSH_PORT}/tcp comment 'SSH custom port'
+    ufw allow 80/tcp comment 'HTTP'
+    ufw allow 443/tcp comment 'HTTPS'
+    
+    ufw limit ${SSH_PORT}/tcp comment 'SSH rate limit'
+    
+    echo "y" | ufw enable
+    
+    ufw logging medium
+    
+    log SECURE "Firewall configurato"
+}
+
+# =============================================
+# FASE 6: FAIL2BAN
+# =============================================
+
+setup_fail2ban() {
+    log INFO "=== FASE 6: Fail2Ban Configuration ==="
+    
+    # Crea directory per filtri
+    mkdir -p /etc/fail2ban/filter.d
+    
+    # Installa msmtp per email
+    apt-get install -y msmtp msmtp-mta mailutils
+    
+    log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log WARN "Per Gmail hai bisogno di una App Password!"
+    log WARN "1. Vai su: https://myaccount.google.com/apppasswords"
+    log WARN "2. Genera una password per Mail"
+    log WARN "3. Inseriscila qui (non la tua password normale!)"
+    log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo
+    read -p "Inserisci Gmail App Password: " -s gmail_app_password
+    echo
+    
+    # Configura msmtp
+    cat > /etc/msmtprc << MSMTP_EOF
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        /var/log/msmtp.log
+
+account        gmail
+host           smtp.gmail.com
+port           587
+from           ${EMAIL}
+user           ${EMAIL}
+password       ${gmail_app_password}
+tls_starttls  on
+
+account default : gmail
+MSMTP_EOF
+    
+    chmod 600 /etc/msmtprc
+    
+    echo "root: ${EMAIL}" >> /etc/aliases
+    
+    # Test email
+    echo "Test email da Nonuso.net" | mail -s "Nonuso.net: Test Email" ${EMAIL} || \
+        log WARN "Test email fallito"
+    
+    # Configurazione Fail2Ban
+    cat > /etc/fail2ban/jail.local << 'F2B_EOF'
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 3
+destemail = vmaltarello@gmail.com
+sendername = Fail2Ban
+action = %(action_mwl)s
+
+[sshd]
+enabled = true
+port = 22847
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 7200
+
+[nginx-http-auth]
+enabled = true
+filter = nginx-http-auth
+port = http,https
+logpath = /var/log/nginx/error.log
+maxretry = 3
+
+[nginx-limit-req]
+enabled = true
+filter = nginx-limit-req
+port = http,https
+logpath = /var/log/nginx/error.log
+maxretry = 10
+findtime = 60
+bantime = 600
+F2B_EOF
+
+    systemctl restart fail2ban
+    systemctl enable fail2ban
+    
+    log SECURE "Fail2Ban configurato"
+}
+
+# =============================================
+# FASE 7: DOCKER
+# =============================================
+
+setup_docker() {
+    log INFO "=== FASE 7: Docker Installation ==="
+    
+    apt-get remove -y docker docker-engine docker.io containerd runc || true
+    
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    
+    cat > /etc/docker/daemon.json << 'DOCKER_EOF'
+{
+    "icc": false,
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "10m",
+        "max-file": "3"
+    },
+    "userland-proxy": false,
+    "no-new-privileges": true,
+    "live-restore": true,
+    "default-ulimits": {
+        "nofile": {
+            "Name": "nofile",
+            "Hard": 64000,
+            "Soft": 64000
+        }
+    }
+}
+DOCKER_EOF
+
+    usermod -aG docker "${APP_USER}"
+    
+    systemctl restart docker
+    systemctl enable docker
+    
+    log SECURE "Docker installato"
+}
+
+# =============================================
+# FASE 8: NGINX
+# =============================================
+
+setup_nginx() {
+    log INFO "=== FASE 8: Nginx Configuration ==="
+    
+    cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
+    
+    cat > /etc/nginx/nginx.conf << 'NGINX_EOF'
+user www-data;
+worker_processes auto;
+worker_rlimit_nofile 65535;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 4096;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    client_max_body_size 50M;
+    server_tokens off;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
+    limit_conn_zone $binary_remote_addr zone=addr:10m;
+
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+NGINX_EOF
+
+    cat > /etc/nginx/sites-available/api.nonuso.com << 'SITE_EOF'
+server {
+    listen 80;
+    server_name api.nonuso.com;
+    
+    limit_req zone=general burst=20 nodelay;
+    limit_conn addr 10;
+    
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+SITE_EOF
+
+    mkdir -p /var/www/certbot
+    chown www-data:www-data /var/www/certbot
+    
+    ln -sf /etc/nginx/sites-available/api.nonuso.com /etc/nginx/sites-enabled/
+    rm -f /etc/nginx/sites-enabled/default
+    
+    nginx -t
+    systemctl restart nginx
+    systemctl enable nginx
+    
+    log SECURE "Nginx configurato"
+}
+
+# =============================================
+# FASE 9: SSL
+# =============================================
+
+setup_ssl() {
+    log INFO "=== FASE 9: SSL Configuration ==="
+    
+    log WARN "Assicurati che ${DOMAIN} punti a questo server!"
+    
+    certbot certonly --webroot \
+        -w /var/www/certbot \
+        -d "${DOMAIN}" \
+        --non-interactive \
+        --agree-tos \
+        --email "${EMAIL}" \
+        --rsa-key-size 4096 \
+        || {
+            log WARN "Impossibile ottenere certificato SSL"
+            return
+        }
+    
+    if [[ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]]; then
+        cat > /etc/nginx/sites-available/api.nonuso.com << 'HTTPS_EOF'
+server {
+    listen 80;
+    server_name api.nonuso.com;
+    
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.nonuso.com;
+    
+    ssl_certificate /etc/letsencrypt/live/api.nonuso.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.nonuso.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/api.nonuso.com/chain.pem;
+    
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
+    limit_req zone=api burst=50 nodelay;
+    limit_conn addr 20;
+    
+    access_log /var/log/nginx/api.nonuso.com.access.log;
+    error_log /var/log/nginx/api.nonuso.com.error.log;
+    
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+    
+    location /health {
+        access_log off;
+        return 200 "OK\n";
+        add_header Content-Type text/plain;
+    }
+}
+HTTPS_EOF
+
+        nginx -t && systemctl reload nginx
+        
+        # Auto renewal
+        cat > /etc/systemd/system/certbot-renewal.service << 'CERTBOT_EOF'
+[Unit]
+Description=Certbot Renewal
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot renew --quiet --deploy-hook "systemctl reload nginx"
+CERTBOT_EOF
+
+        cat > /etc/systemd/system/certbot-renewal.timer << 'TIMER_EOF'
+[Unit]
+Description=Run certbot twice daily
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+TIMER_EOF
+
+        systemctl daemon-reload
+        systemctl enable certbot-renewal.timer
+        systemctl start certbot-renewal.timer
+        
+        log SECURE "SSL configurato"
+    fi
+}
+
+# =============================================
+# FASE 10: BACKUP CON GOOGLE DRIVE
+# =============================================
+
+setup_backup() {
+    log INFO "=== FASE 10: Backup System con Google Drive ==="
+    
+    # Installa rclone
+    curl https://rclone.org/install.sh | bash
+    
+    log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log WARN "Configurazione Google Drive:"
+    log WARN "1. Scegli n per new remote"
+    log WARN "2. Nome: gdrive"
+    log WARN "3. Storage: drive"
+    log WARN "4. Segui OAuth"
+    log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    read -p "Premi ENTER per configurare rclone..."
+    
+    rclone config
+    
+    mkdir -p "${BACKUP_DIR}"
+    mkdir -p "${LOG_DIR}"
+    chmod 750 "${BACKUP_DIR}"
+    chmod 750 "${LOG_DIR}"
+    
+    local backup_password=$(generate_secure_password)
+    echo "${backup_password}" > /root/.backup_password
+    chmod 600 /root/.backup_password
+    
+    # Script backup
+    cat > /usr/local/bin/nonuso-backup << 'BACKUP_EOF'
+#!/bin/bash
+set -euo pipefail
+
+BACKUP_DIR="/opt/nonuso-backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_PATH="${BACKUP_DIR}/${DATE}"
+LOG_FILE="/var/log/nonuso/backup.log"
+GDRIVE_FOLDER="nonuso-backups"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "${LOG_FILE}"
+}
+
+mkdir -p "${BACKUP_PATH}"
+log "=== INIZIO BACKUP ${DATE} ==="
+
+# Backup Database
+if docker ps --format '{{.Names}}' | grep -q "nonuso-postgres"; then
+    log "Backup database..."
+    docker exec nonuso-postgres pg_dumpall -U nonusouservm | gzip > "${BACKUP_PATH}/postgres_dump.sql.gz"
+fi
+
+# Backup volumi
+log "Backup volumi Docker..."
+for volume in $(docker volume ls -q | grep nonuso); do
+    docker run --rm -v "${volume}:/source:ro" -v "${BACKUP_PATH}:/backup" alpine tar czf "/backup/${volume}.tar.gz" -C /source .
+done
+
+# Backup config
+tar czf "${BACKUP_PATH}/configs.tar.gz" \
+    /etc/nginx/sites-available \
+    /etc/fail2ban/jail.local \
+    /etc/docker/daemon.json \
+    /home/unonuso/nonuso_net/docker-compose.prod.yml \
+    2>/dev/null || true
+
+# Backup secrets (criptato)
+if [[ -d /home/unonuso/nonuso_net/secrets ]]; then
+    log "Backup secrets..."
+    tar czf - /home/unonuso/nonuso_net/secrets | \
+        openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+        -pass file:"/root/.backup_password" \
+        -out "${BACKUP_PATH}/secrets.tar.gz.enc"
+fi
+
+# Comprimi tutto
+cd "${BACKUP_DIR}"
+tar czf "${DATE}.tar.gz" "${DATE}"
+rm -rf "${DATE}"
+
+# Upload Google Drive
+if command -v rclone &> /dev/null && rclone listremotes | grep -q "gdrive:"; then
+    log "Upload su Google Drive..."
+    rclone mkdir "gdrive:/${GDRIVE_FOLDER}/$(date +%Y-%m)" || true
+    rclone copy "${BACKUP_DIR}/${DATE}.tar.gz" "gdrive:/${GDRIVE_FOLDER}/$(date +%Y-%m)/" --progress
+fi
+
+# Pulizia locale
+find "${BACKUP_DIR}" -name "*.tar.gz" -type f -mtime +7 -delete
+
+log "=== BACKUP COMPLETATO ==="
+BACKUP_EOF
+
+    chmod +x /usr/local/bin/nonuso-backup
+    
+    # Cron backup
+    cat > /etc/cron.d/nonuso-backup << 'CRON_EOF'
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Backup giornaliero alle 2 AM
+0 2 * * * root /usr/local/bin/nonuso-backup >> /var/log/nonuso/backup-cron.log 2>&1
+CRON_EOF
+
+    log SECURE "Backup configurato"
+}
+
+# =============================================
+# FASE 11: MONITORING
+# =============================================
+
+setup_monitoring() {
+    log INFO "=== FASE 11: Monitoring Configuration ==="
+    
+    apt-get install -y monit
+    
+    cat > /etc/monit/monitrc << 'MONIT_EOF'
+set daemon 120
+set log /var/log/monit.log
+
+set httpd port 2812 and
+    use address localhost
+    allow localhost
+    allow admin:monit
+
+check system $HOST
+    if loadavg (5min) > 4 then alert
+    if memory usage > 90% then alert
+    if cpu usage > 80% for 2 cycles then alert
+
+check filesystem rootfs with path /
+    if space usage > 80% then alert
+
+check process sshd with pidfile /var/run/sshd.pid
+    start program = "/bin/systemctl start ssh"
+    stop program = "/bin/systemctl stop ssh"
+
+check process nginx with pidfile /var/run/nginx.pid
+    start program = "/bin/systemctl start nginx"
+    stop program = "/bin/systemctl stop nginx"
+
+check process docker with pidfile /var/run/docker.pid
+    start program = "/bin/systemctl start docker"
+    stop program = "/bin/systemctl stop docker"
+MONIT_EOF
+
+    chmod 700 /etc/monit/monitrc
+    systemctl restart monit
+    systemctl enable monit
+    
+    # Script monitor
+    cat > /usr/local/bin/nonuso-monitor << 'MONITOR_EOF'
+#!/bin/bash
+echo "=== SYSTEM STATUS ==="
+echo "Time: $(date)"
+echo
+echo "=== LOAD ==="
+uptime
+echo
+echo "=== MEMORY ==="
+free -h
+echo
+echo "=== DISK ==="
+df -h
+echo
+echo "=== DOCKER ==="
+docker ps
+echo
+echo "=== FAIL2BAN ==="
+fail2ban-client status
+MONITOR_EOF
+
+    chmod +x /usr/local/bin/nonuso-monitor
+    
+    log SECURE "Monitoring configurato"
+}
+
+# =============================================
+# FASE 12: FINALIZZAZIONE
+# =============================================
+
+finalize_setup() {
+    log INFO "=== FASE 12: Finalizzazione ==="
+    
+    # Disabilita servizi non necessari
+    local services=("bluetooth" "cups" "avahi-daemon")
+    for service in "${services[@]}"; do
+        systemctl stop "${service}" 2>/dev/null || true
+        systemctl disable "${service}" 2>/dev/null || true
+    done
+    
+    # Rimuovi pacchetti non necessari
+    apt-get purge -y telnet ftp rsh-client 2>/dev/null || true
+    apt-get autoremove -y
+    apt-get autoclean
+    
+    # Permessi file critici
+    chmod 600 /etc/ssh/sshd_config
+    chmod 600 /etc/crontab
+    chmod 700 /root
+    
+    # Crea script gestione
+    cat > /usr/local/bin/nonuso << 'NONUSO_EOF'
+#!/bin/bash
+case "$1" in
+    start)
+        cd /home/unonuso/nonuso_net
+        docker compose -f docker-compose.prod.yml up -d
+        ;;
+    stop)
+        cd /home/unonuso/nonuso_net
+        docker compose -f docker-compose.prod.yml down
+        ;;
+    restart)
+        $0 stop
+        sleep 2
+        $0 start
+        ;;
+    status)
+        docker ps
+        ;;
+    logs)
+        cd /home/unonuso/nonuso_net
+        docker compose -f docker-compose.prod.yml logs -f ${2:-}
+        ;;
+    backup)
+        /usr/local/bin/nonuso-backup
+        ;;
+    monitor)
+        /usr/local/bin/nonuso-monitor
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status|logs|backup|monitor}"
+        exit 1
+        ;;
+esac
+NONUSO_EOF
+
+    chmod +x /usr/local/bin/nonuso
+    
+    # Genera report finale
+    cat > "${SECURITY_REPORT}" << REPORT_EOF
+===============================================
+   NONUSO.NET SECURITY SETUP REPORT
+   Generated: $(date)
+===============================================
+
+1. ACCESSO SSH
+--------------
+Porta SSH: ${SSH_PORT}
+Utente: ${APP_USER}
+Auth: SOLO CHIAVE SSH
+
+Connessione:
+ssh -p ${SSH_PORT} ${APP_USER}@IP_SERVER
+
+2. FIREWALL
+-----------
+Porte aperte:
+- ${SSH_PORT}/tcp (SSH)
+- 80/tcp (HTTP)
+- 443/tcp (HTTPS)
+
+3. SSL
+------
+Dominio: ${DOMAIN}
+Certificati: /etc/letsencrypt/live/${DOMAIN}/
+
+4. BACKUP
+---------
+Directory: ${BACKUP_DIR}
+Password: /root/.backup_password
+Schedule: 2:00 AM giornaliero
+
+5. MONITORAGGIO
+---------------
+Monit: ssh -L 2812:localhost:2812 user@server
+Poi: http://localhost:2812 (admin/monit)
+
+6. COMANDI
+----------
+nonuso start|stop|restart|status|logs|backup|monitor
+
+7. PROSSIMI PASSI
+-----------------
+1. Aggiungi tua chiave SSH:
+   echo "TUA_CHIAVE_PUBBLICA" >> /home/${APP_USER}/.ssh/authorized_keys
+
+2. Disabilita password SSH:
+   sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+   systemctl restart sshd
+
+3. Configura DNS per ${DOMAIN}
+
+4. Test backup:
+   nonuso backup
+
+===============================================
+REPORT_EOF
+
+    chmod 600 "${SECURITY_REPORT}"
+    
+    log SECURE "Setup completato!"
+}
+
+# =============================================
+# MAIN
+# =============================================
+
+main() {
+    log INFO "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log INFO "NONUSO.NET PRODUCTION SERVER SETUP"
+    log INFO "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    check_prerequisites
+    setup_base_system
+    harden_kernel
+    setup_secure_user
+    harden_ssh
+    setup_firewall
+    setup_fail2ban
+    setup_docker
+    setup_nginx
+    setup_ssl
+    setup_backup
+    setup_monitoring
+    finalize_setup
+    
+    echo
+    log SECURE "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log SECURE "SETUP COMPLETATO!"
+    log SECURE "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo
+    log WARN "AZIONI RICHIESTE:"
+    log WARN "1. SALVA la chiave GitHub Actions mostrata sopra"
+    log WARN "2. AGGIORNA firewall per porta ${SSH_PORT}"
+    log WARN "3. RIAVVIA SSH: systemctl restart sshd"
+    echo
+    cat "${SECURITY_REPORT}"
+}
+
+# Esegui
+main "$@"

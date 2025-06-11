@@ -39,7 +39,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                        IsAttachment = x.IsAttachment,
                        CreatedAt = x.CreatedAt
                    }),
-                   ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequestedUser! : x.ProductRequest.RequesterUser!
+                   ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
                })
                .FirstOrDefaultAsync();
         }
