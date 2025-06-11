@@ -40,7 +40,7 @@ jobs:
     - name: Create Backup
       run: |
         echo "Creating backup..."    
-        ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "\
+        ssh -p 22847 -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "\
         if [ -d /home/unonuso/nonuso_net ]; then \
           echo 'Directory exists, creating backup...'; \
           cd /home/unonuso/nonuso_net && \
@@ -62,13 +62,13 @@ jobs:
           --exclude '*.tar.gz' \
           --exclude 'bin/' \
           --exclude 'obj/' \
-          -e "ssh -i ~/.ssh/deploy_key" \
+          -e "ssh -p 22847 -i ~/.ssh/deploy_key" \
           ./ unonuso@${{ secrets.VPS_HOST }}:/home/unonuso/nonuso_net/
 
     - name: Write Secrets to Files on Server
       run: |
         echo "Writing secrets to files on server..."
-        SSH_COMMAND="ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }}"
+        SSH_COMMAND="ssh -p 22847 -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }}"
         SECRET_DIR="/home/unonuso/nonuso_net/secrets"
         $SSH_COMMAND "mkdir -p $SECRET_DIR"  
         echo "${{ secrets.DB_CONNECTION }}" > db_connection.txt
@@ -111,9 +111,9 @@ jobs:
     - name: Start Services
       run: |
         echo "Starting services..."
-        ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "cd /home/unonuso/nonuso_net && docker compose -f docker-compose.prod.yml up -d --build"
+        ssh -p 22847 -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "cd /home/unonuso/nonuso_net && docker compose -f docker-compose.prod.yml up -d --build"
 
     - name: Run Migrations
       run: |
         echo "Running database migrations..."
-        ssh -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "cd /home/unonuso/nonuso_net && docker compose -f docker-compose.prod.yml run --rm migration"
+        ssh -p 22847 -i ~/.ssh/deploy_key unonuso@${{ secrets.VPS_HOST }} "cd /home/unonuso/nonuso_net && docker compose -f docker-compose.prod.yml run --rm migration"
