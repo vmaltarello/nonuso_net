@@ -23,6 +23,7 @@ readonly APP_USER="unonuso"
 readonly APP_GROUP="unonuso"
 readonly APP_DIR="/home/${APP_USER}/nonuso_net"
 readonly BACKUP_DIR="/opt/nonuso-backups"
+readonly DEPLOY_BACKUP_DIR="/opt/deploy-backups"
 readonly LOG_DIR="/var/log/nonuso"
 readonly DOMAIN="api.nonuso.com"
 readonly EMAIL="vmaltarello@gmail.com"
@@ -217,6 +218,8 @@ setup_secure_user() {
         "${APP_DIR}/backups:700"
         "${APP_DIR}/.ssh:700"
         "/var/log/nonuso:750"
+        "${BACKUP_DIR}:750"
+        "${DEPLOY_BACKUP_DIR}:750"
     )
     
     for dir_perm in "${dirs[@]}"; do
@@ -934,6 +937,9 @@ APP_DIR="/home/unonuso/nonuso_net"
 GDRIVE_BASE="NonusoApp-VPS1"
 
 mkdir -p "${DEPLOY_BACKUP_DIR}"
+chown unonuso:unonuso "${DEPLOY_BACKUP_DIR}"
+chmod 750 "${DEPLOY_BACKUP_DIR}"
+
 cd "${APP_DIR}"
 
 # Backup pre-deploy
