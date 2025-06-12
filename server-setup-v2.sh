@@ -686,47 +686,31 @@ SITE_EOF
 # =============================================
 
 setup_ssl() {
-    log INFO "=== FASE 9: Configurazione SSL ==="
+    log INFO "=== FASE 9: SSL Configuration ==="
     
-    # Verifica se esiste già un certificato valido
-    if [ -d "/etc/letsencrypt/live/${DOMAIN}" ]; then
-        local cert_expiry=$(openssl x509 -enddate -noout -in "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" | cut -d= -f2)
-        local cert_expiry_epoch=$(date -d "$cert_expiry" +%s)
-        local current_epoch=$(date +%s)
-        local days_remaining=$(( ($cert_expiry_epoch - $current_epoch) / 86400 ))
-        
-        if [ $days_remaining -gt 30 ]; then
-            log INFO "Certificato SSL esistente valido per altri $days_remaining giorni. Nessuna necessità di rinnovo."
-            return 0
-        fi
-    fi
+    log WARN "Assicurati che ${DOMAIN} punti a questo server!"
     
-    # Verifica il rate limit di Let's Encrypt
-    local rate_limit_file="/var/log/letsencrypt/rate-limit.txt"
-    if [ -f "$rate_limit_file" ]; then
-        local last_request=$(cat "$rate_limit_file")
-        local current_time=$(date +%s)
-        local time_diff=$((current_time - last_request))
-        
-        # Se sono passate meno di 168 ore dall'ultima richiesta
-        if [ $time_diff -lt 604800 ]; then
-            log WARN "Rate limit di Let's Encrypt raggiunto. Configurando certificato temporaneo..."
-            
-            # Crea directory per il certificato temporaneo
-            mkdir -p /etc/ssl/private
-            
-            # Genera certificato temporaneo
-            openssl req -x509 -nodes -days 7 -newkey rsa:2048 \
-                -keyout /etc/ssl/private/${DOMAIN}.key \
-                -out /etc/ssl/certs/${DOMAIN}.crt \
-                -subj "/CN=${DOMAIN}" \
-                -addext "subjectAltName = DNS:${DOMAIN}"
-            
-            # Configura Nginx con il certificato temporaneo
-            cat > /etc/nginx/sites-available/${DOMAIN} << 'HTTPS_EOF'
+    certbot certonly --webroot \
+        -w /var/www/certbot \
+        -d "${DOMAIN}" \
+        --non-interactive \
+        --agree-tos \
+        --email "${EMAIL}" \
+        --rsa-key-size 4096 \
+        || {
+            log WARN "Impossibile ottenere certificato SSL"
+            return
+        }
+    
+    if [[ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]]; then
+        cat > /etc/nginx/sites-available/api.nonuso.com << 'HTTPS_EOF'
 server {
     listen 80;
     server_name api.nonuso.com;
+    
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
     
     location / {
         return 301 https://$server_name$request_uri;
@@ -737,8 +721,9 @@ server {
     listen 443 ssl http2;
     server_name api.nonuso.com;
     
-    ssl_certificate /etc/ssl/certs/api.nonuso.com.crt;
-    ssl_certificate_key /etc/ssl/private/api.nonuso.com.key;
+    ssl_certificate /etc/letsencrypt/live/api.nonuso.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.nonuso.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/api.nonuso.com/chain.pem;
     
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
@@ -774,41 +759,37 @@ server {
 }
 HTTPS_EOF
 
-            # Configura il rinnovo automatico per quando il rate limit sarà scaduto
-            local next_renewal=$((last_request + 604800))
-            local next_renewal_date=$(date -d "@$next_renewal" "+%Y-%m-%d %H:%M:%S")
-            
-            cat > /etc/cron.d/certbot-renew << EOF
-# Rinnovo automatico del certificato Let's Encrypt
-0 0 * * * root [ \$(date +%s) -gt $next_renewal ] && certbot certonly --standalone --preferred-challenges http --agree-tos --email "${EMAIL}" -d "${DOMAIN}" --non-interactive --force-renewal && systemctl reload nginx
-EOF
-            
-            nginx -t && systemctl reload nginx
-            log WARN "Certificato temporaneo configurato. Il certificato Let's Encrypt verrà richiesto automaticamente dopo: $next_renewal_date"
-            return 0
-        fi
+        nginx -t && systemctl reload nginx
+        
+        # Auto renewal
+        cat > /etc/systemd/system/certbot-renewal.service << 'CERTBOT_EOF'
+[Unit]
+Description=Certbot Renewal
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot renew --quiet --deploy-hook "systemctl reload nginx"
+CERTBOT_EOF
+
+        cat > /etc/systemd/system/certbot-renewal.timer << 'TIMER_EOF'
+[Unit]
+Description=Run certbot twice daily
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+TIMER_EOF
+
+        systemctl daemon-reload
+        systemctl enable certbot-renewal.timer
+        systemctl start certbot-renewal.timer
+        
+        log SECURE "SSL configurato"
     fi
-    
-    # Registra il timestamp della richiesta
-    date +%s > "$rate_limit_file"
-    
-    # Richiedi il certificato
-    certbot certonly --standalone \
-        --preferred-challenges http \
-        --agree-tos \
-        --email "${EMAIL}" \
-        -d "${DOMAIN}" \
-        --non-interactive \
-        --force-renewal || {
-            log ERROR "Errore nella generazione del certificato SSL"
-            return 1
-        }
-    
-    # Configura il rinnovo automatico
-    echo "0 0 * * * root certbot renew --quiet --post-hook 'systemctl reload nginx'" > /etc/cron.d/certbot-renew
-    
-    log SUCCESS "Certificato SSL configurato con successo"
-    return 0
 }
 
 # =============================================
