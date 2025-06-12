@@ -1,5 +1,4 @@
 ﻿#!/bin/bash
-
 # =============================================
 # NONUSO.NET PRODUCTION SERVER HARDENING SCRIPT
 # =============================================
@@ -323,7 +322,7 @@ GSSAPIAuthentication no
 AllowUsers ${APP_USER}
 
 X11Forwarding no
-AllowTcpForwarding no
+AllowTcpForwarding yes
 AllowAgentForwarding no
 PermitTunnel no
 
@@ -1028,7 +1027,7 @@ CRON_EOF
         cp /root/.ssh/github_actions_ed25519 "${CRED_DIR}/github_actions_ssh_key"
         cp /root/.ssh/github_actions_ed25519.pub "${CRED_DIR}/github_actions_ssh_key.pub"
         cp /root/nonuso-security-report.txt "${CRED_DIR}/" || true
-        cp /etc/rclone/rclone.conf "${CRED_DIR}/rclone.conf" || true
+        cp /root/.config/rclone/rclone.conf "${CRED_DIR}/rclone.conf" || true
         
         # Crea README per le credenziali
         cat > "${CRED_DIR}/README-IMPORTANTE.txt" << 'README_EOF'
@@ -1116,7 +1115,7 @@ check system $HOST
 check filesystem rootfs with path /
     if space usage > 80% then alert
 
-check process sshd with pidfile /var/run/sshd.pid
+check process ssh with pidfile /var/run/sshd.pid
     start program = "/bin/systemctl start ssh"
     stop program = "/bin/systemctl stop ssh"
 
@@ -1306,7 +1305,7 @@ ${GDRIVE_BASE}/
 
 3. Disabilita password SSH:
    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-   systemctl restart sshd
+   systemctl restart ssh
 
 4. Configura DNS per ${DOMAIN}
 
@@ -1362,7 +1361,7 @@ main() {
     log WARN "3. Da ALTRA finestra terminal, testa SSH:"
     log WARN "   ssh -p ${SSH_PORT} ${APP_USER}@$(curl -s ifconfig.me)"
     log WARN "4. SOLO quando funziona, riavvia SSH:"
-    log WARN "   systemctl restart sshd"
+    log WARN "   systemctl restart ssh"
     echo
     log INFO "Password backup salvata in:"
     log INFO "- Locale: /root/.backup_password"
