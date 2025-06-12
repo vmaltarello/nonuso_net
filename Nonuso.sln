@@ -25,6 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Common", "Common\Non
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{00DD7339-AF12-4345-8152-2E46C26148AF}"
 	ProjectSection(SolutionItems) = preProject
+		backup-deploy.sh = backup-deploy.sh
 		debug.ps1 = debug.ps1
 		docker-compose.debug.yml = docker-compose.debug.yml
 		docker-compose.prod.yml = docker-compose.prod.yml

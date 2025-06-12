@@ -2,7 +2,6 @@
 
 # =============================================
 # NONUSO.NET PRODUCTION SERVER HARDENING SCRIPT
-# Version: 2.0 - Production Grade
 # =============================================
 
 set -euo pipefail
@@ -29,9 +28,10 @@ readonly LOG_DIR="/var/log/nonuso"
 readonly DOMAIN="api.nonuso.com"
 readonly EMAIL="vmaltarello@gmail.com"
 readonly SSH_PORT="22847"
+readonly GDRIVE_BASE="NonusoApp-VPS1"
 
-# File di log
-readonly SETUP_LOG="/var/log/nonuso-setup.log"
+# File di log e report
+readonly SETUP_LOG="/dev/null"  # Non salva log su disco per sicurezza
 readonly SECURITY_REPORT="/root/nonuso-security-report.txt"
 
 # =============================================
@@ -44,11 +44,11 @@ log() {
     local message="[$(date '+%Y-%m-%d %H:%M:%S')] [${level}] $*"
     
     case ${level} in
-        ERROR)   echo -e "${RED}${message}${NC}" | tee -a "${SETUP_LOG}" >&2 ;;
-        WARN)    echo -e "${YELLOW}${message}${NC}" | tee -a "${SETUP_LOG}" ;;
-        INFO)    echo -e "${GREEN}${message}${NC}" | tee -a "${SETUP_LOG}" ;;
-        SECURE)  echo -e "${PURPLE}${message}${NC}" | tee -a "${SETUP_LOG}" ;;
-        *)       echo -e "${message}" | tee -a "${SETUP_LOG}" ;;
+        ERROR)   echo -e "${RED}${message}${NC}" >&2 ;;
+        WARN)    echo -e "${YELLOW}${message}${NC}" ;;
+        INFO)    echo -e "${GREEN}${message}${NC}" ;;
+        SECURE)  echo -e "${PURPLE}${message}${NC}" ;;
+        *)       echo -e "${message}" ;;
     esac
 }
 
@@ -455,8 +455,8 @@ MSMTP_EOF
     
     echo "root: ${EMAIL}" >> /etc/aliases
     
-    # Test email
-    echo "Test email da Nonuso.net" | mail -s "Nonuso.net: Test Email" ${EMAIL} || \
+    # Test email con tag per filtro Gmail
+    echo "Test email da Nonuso.net - Setup completato" | mail -s "[NONUSO-SERVER] Test Email" ${EMAIL} || \
         log WARN "Test email fallito"
     
     # Configurazione Fail2Ban
@@ -467,6 +467,7 @@ findtime = 600
 maxretry = 3
 destemail = vmaltarello@gmail.com
 sendername = Fail2Ban
+mta = mail
 action = %(action_mwl)s
 
 [sshd]
@@ -494,10 +495,37 @@ findtime = 60
 bantime = 600
 F2B_EOF
 
+    # Configura template email personalizzato
+    mkdir -p /etc/fail2ban/action.d
+    cat > /etc/fail2ban/action.d/sendmail-common.local << 'SENDMAIL_EOF'
+[Definition]
+actionstart = 
+actionstop = 
+actioncheck = 
+actionban = printf %%b "Subject: [NONUSO-SERVER] Fail2Ban: <name> banned <ip>
+Date: `date`
+From: Fail2Ban <<sender>>
+To: <dest>
+
+Hi,
+
+The IP <ip> has just been banned by Fail2Ban after <failures> attempts against <name>.
+
+Jail: <name>
+Banned IP: <ip>
+Failures: <failures>
+Log entries: <matches>
+
+Regards,
+Fail2Ban" | /usr/sbin/sendmail -f <sender> <dest>
+
+actionunban = 
+SENDMAIL_EOF
+
     systemctl restart fail2ban
     systemctl enable fail2ban
     
-    log SECURE "Fail2Ban configurato"
+    log SECURE "Fail2Ban configurato con notifiche email"
 }
 
 # =============================================
@@ -763,8 +791,9 @@ setup_backup() {
     log WARN "Configurazione Google Drive:"
     log WARN "1. Scegli n per new remote"
     log WARN "2. Nome: gdrive"
-    log WARN "3. Storage: drive"
-    log WARN "4. Segui OAuth"
+    log WARN "3. Storage: drive (Google Drive)"
+    log WARN "4. Application type: Desktop app"
+    log WARN "5. Segui OAuth"
     log WARN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     read -p "Premi ENTER per configurare rclone..."
     
@@ -775,9 +804,14 @@ setup_backup() {
     chmod 750 "${BACKUP_DIR}"
     chmod 750 "${LOG_DIR}"
     
+    # Genera password per backup criptati
     local backup_password=$(generate_secure_password)
     echo "${backup_password}" > /root/.backup_password
     chmod 600 /root/.backup_password
+    
+    # IMPORTANTE: Salva password anche in chiaro per decriptazione
+    echo "BACKUP_DECRYPT_PASSWORD=${backup_password}" > /root/.backup_decrypt_info
+    chmod 600 /root/.backup_decrypt_info
     
     # Script backup
     cat > /usr/local/bin/nonuso-backup << 'BACKUP_EOF'
@@ -788,10 +822,17 @@ BACKUP_DIR="/opt/nonuso-backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_PATH="${BACKUP_DIR}/${DATE}"
 LOG_FILE="/var/log/nonuso/backup.log"
-GDRIVE_FOLDER="nonuso-backups"
+GDRIVE_BASE="NonusoApp-VPS1"
+BACKUP_PASSWORD_FILE="/root/.backup_password"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "${LOG_FILE}"
+}
+
+send_notification() {
+    local subject="$1"
+    local message="$2"
+    echo "${message}" | mail -s "[NONUSO-SERVER] Backup: ${subject}" vmaltarello@gmail.com || true
 }
 
 mkdir -p "${BACKUP_PATH}"
@@ -819,12 +860,24 @@ tar czf "${BACKUP_PATH}/configs.tar.gz" \
 
 # Backup secrets (criptato)
 if [[ -d /home/unonuso/nonuso_net/secrets ]]; then
-    log "Backup secrets..."
+    log "Backup secrets (criptato)..."
     tar czf - /home/unonuso/nonuso_net/secrets | \
         openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
-        -pass file:"/root/.backup_password" \
+        -pass file:"${BACKUP_PASSWORD_FILE}" \
         -out "${BACKUP_PATH}/secrets.tar.gz.enc"
 fi
+
+# IMPORTANTE: Includi info per decriptazione
+cat > "${BACKUP_PATH}/DECRYPT_README.txt" << EOF
+Per decriptare i file .enc:
+
+openssl enc -aes-256-cbc -d -pbkdf2 -iter 100000 \
+    -pass pass:VEDERE_PASSWORD_IN_GDRIVE \
+    -in FILE.enc -out FILE
+
+La password si trova in:
+Google Drive/${GDRIVE_BASE}/credentials/backup-decrypt-password.txt
+EOF
 
 # Comprimi tutto
 cd "${BACKUP_DIR}"
@@ -834,8 +887,20 @@ rm -rf "${DATE}"
 # Upload Google Drive
 if command -v rclone &> /dev/null && rclone listremotes | grep -q "gdrive:"; then
     log "Upload su Google Drive..."
-    rclone mkdir "gdrive:/${GDRIVE_FOLDER}/$(date +%Y-%m)" || true
-    rclone copy "${BACKUP_DIR}/${DATE}.tar.gz" "gdrive:/${GDRIVE_FOLDER}/$(date +%Y-%m)/" --progress
+    
+    # Crea struttura cartelle
+    rclone mkdir "gdrive:/${GDRIVE_BASE}/backups/$(date +%Y-%m)" || true
+    
+    # Upload backup
+    if rclone copy "${BACKUP_DIR}/${DATE}.tar.gz" "gdrive:/${GDRIVE_BASE}/backups/$(date +%Y-%m)/" --progress; then
+        BACKUP_SIZE=$(du -h "${BACKUP_DIR}/${DATE}.tar.gz" | cut -f1)
+        send_notification "Backup Completato" "Backup ${DATE} caricato su Google Drive (${BACKUP_SIZE})"
+    else
+        send_notification "Backup Warning" "Upload su Google Drive fallito per ${DATE}"
+    fi
+    
+    # Pulizia remota backup più vecchi di 30 giorni
+    rclone delete "gdrive:/${GDRIVE_BASE}/backups" --min-age 30d || true
 fi
 
 # Pulizia locale
@@ -846,6 +911,95 @@ BACKUP_EOF
 
     chmod +x /usr/local/bin/nonuso-backup
     
+    # Script per backup deploy da GitHub Actions
+    cat > /usr/local/bin/backup-deploy << 'DEPLOY_EOF'
+#!/bin/bash
+set -euo pipefail
+
+DEPLOY_BACKUP_DIR="/opt/deploy-backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+APP_DIR="/home/unonuso/nonuso_net"
+GDRIVE_BASE="NonusoApp-VPS1"
+
+mkdir -p "${DEPLOY_BACKUP_DIR}"
+cd "${APP_DIR}"
+
+# Backup pre-deploy
+tar czf "${DEPLOY_BACKUP_DIR}/pre-deploy-${DATE}.tar.gz" \
+    --exclude="node_modules" \
+    --exclude=".git" \
+    --exclude="*.log" \
+    .
+
+# Upload su Google Drive
+if command -v rclone &> /dev/null && rclone listremotes | grep -q "gdrive:"; then
+    rclone mkdir "gdrive:/${GDRIVE_BASE}/deploy-backups/$(date +%Y-%m)" || true
+    rclone move "${DEPLOY_BACKUP_DIR}/pre-deploy-${DATE}.tar.gz" \
+        "gdrive:/${GDRIVE_BASE}/deploy-backups/$(date +%Y-%m)/" || true
+fi
+
+# Pulizia locale
+ls -t ${DEPLOY_BACKUP_DIR}/pre-deploy-*.tar.gz 2>/dev/null | tail -n +4 | xargs rm -f || true
+
+# Pulizia Drive (più vecchi di 7 giorni)
+rclone delete "gdrive:/${GDRIVE_BASE}/deploy-backups" --min-age 7d || true
+
+echo "Deploy backup completato"
+DEPLOY_EOF
+
+    chmod +x /usr/local/bin/backup-deploy
+    
+    # Script restore da Google Drive
+    cat > /usr/local/bin/nonuso-restore-gdrive << 'RESTORE_EOF'
+#!/bin/bash
+set -euo pipefail
+
+GDRIVE_BASE="NonusoApp-VPS1"
+LOCAL_RESTORE="/tmp/gdrive_restore"
+
+if [[ $# -lt 1 ]]; then
+    echo "Uso: $0 list|download|restore [backup_name]"
+    exit 1
+fi
+
+case "$1" in
+    list)
+        echo "=== Backup disponibili su Google Drive ==="
+        rclone ls "gdrive:/${GDRIVE_BASE}/backups" --max-depth 2 | grep ".tar.gz$"
+        ;;
+        
+    download)
+        if [[ -z "${2:-}" ]]; then
+            echo "Specifica il nome del backup"
+            exit 1
+        fi
+        mkdir -p "${LOCAL_RESTORE}"
+        echo "Download ${2} da Google Drive..."
+        rclone copy "gdrive:/${GDRIVE_BASE}/backups" "${LOCAL_RESTORE}" \
+            --include "${2}" --progress
+        echo "Download completato in: ${LOCAL_RESTORE}/${2}"
+        ;;
+        
+    restore)
+        if [[ -z "${2:-}" ]]; then
+            echo "Specifica il nome del backup"
+            exit 1
+        fi
+        $0 download "$2"
+        echo "Avvio restore..."
+        /usr/local/bin/nonuso-restore "${LOCAL_RESTORE}/${2}"
+        rm -rf "${LOCAL_RESTORE}"
+        ;;
+        
+    *)
+        echo "Comando non valido: $1"
+        exit 1
+        ;;
+esac
+RESTORE_EOF
+
+    chmod +x /usr/local/bin/nonuso-restore-gdrive
+    
     # Cron backup
     cat > /etc/cron.d/nonuso-backup << 'CRON_EOF'
 SHELL=/bin/bash
@@ -853,9 +1007,74 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Backup giornaliero alle 2 AM
 0 2 * * * root /usr/local/bin/nonuso-backup >> /var/log/nonuso/backup-cron.log 2>&1
+
+# Check spazio disco ogni 6 ore
+0 */6 * * * root df -h | grep -E "^/dev/" | awk '{if(int($5)>85) print "Spazio disco warning: "$6" is "$5" full"}' | mail -s "[NONUSO-SERVER] Disk Space Alert" vmaltarello@gmail.com || true
 CRON_EOF
 
-    log SECURE "Backup configurato"
+    log SECURE "Backup configurato con Google Drive"
+    
+    # Upload immediato credenziali critiche
+    if command -v rclone &> /dev/null && rclone listremotes | grep -q "gdrive:"; then
+        log INFO "Upload credenziali critiche su Google Drive..."
+        
+        # Crea directory temporanea per credenziali
+        local CRED_DIR="/tmp/credentials-$(date +%Y%m%d)"
+        mkdir -p "${CRED_DIR}"
+        
+        # Copia tutti i file critici
+        cp /root/.backup_password "${CRED_DIR}/backup-decrypt-password.txt"
+        cp /root/.backup_decrypt_info "${CRED_DIR}/backup-decrypt-info.txt"
+        cp /root/.ssh/github_actions_ed25519 "${CRED_DIR}/github_actions_ssh_key"
+        cp /root/.ssh/github_actions_ed25519.pub "${CRED_DIR}/github_actions_ssh_key.pub"
+        cp /root/nonuso-security-report.txt "${CRED_DIR}/" || true
+        cp /etc/rclone/rclone.conf "${CRED_DIR}/rclone.conf" || true
+        
+        # Crea README per le credenziali
+        cat > "${CRED_DIR}/README-IMPORTANTE.txt" << 'README_EOF'
+CREDENZIALI CRITICHE NONUSO.NET
+===============================
+
+1. BACKUP DECRYPT PASSWORD
+   File: backup-decrypt-password.txt
+   Uso: Password per decriptare tutti i backup
+
+2. GITHUB ACTIONS SSH KEY
+   File: github_actions_ssh_key
+   Uso: Chiave privata per deploy automatici
+
+3. SECURITY REPORT
+   File: nonuso-security-report.txt
+   Contiene: Porte, configurazioni, comandi
+
+4. RCLONE CONFIG
+   File: rclone.conf
+   Uso: Configurazione Google Drive
+
+IMPORTANTE: Conserva questi file in modo sicuro!
+Per decriptare backup: openssl enc -aes-256-cbc -d -pbkdf2 -iter 100000 -pass pass:PASSWORD -in file.enc -out file
+README_EOF
+
+        # Comprimi e cripta tutto
+        cd /tmp
+        tar czf - "credentials-$(date +%Y%m%d)" | \
+            openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+            -pass file:"/root/.backup_password" \
+            -out "credentials-$(date +%Y%m%d).tar.gz.enc"
+        
+        # Upload su Drive
+        rclone mkdir "gdrive:/${GDRIVE_BASE}/credentials" || true
+        rclone copy "credentials-$(date +%Y%m%d).tar.gz.enc" "gdrive:/${GDRIVE_BASE}/credentials/" || true
+        
+        # Upload anche password in chiaro (per poter decriptare)
+        echo "Password per decriptare: $(cat /root/.backup_password)" > "${CRED_DIR}/MASTER-DECRYPT-PASSWORD.txt"
+        rclone copy "${CRED_DIR}/MASTER-DECRYPT-PASSWORD.txt" "gdrive:/${GDRIVE_BASE}/credentials/" || true
+        
+        # Cleanup
+        rm -rf "${CRED_DIR}" "credentials-$(date +%Y%m%d).tar.gz.enc"
+        
+        log SECURE "Credenziali caricate su Drive"
+    fi
 }
 
 # =============================================
@@ -870,6 +1089,19 @@ setup_monitoring() {
     cat > /etc/monit/monitrc << 'MONIT_EOF'
 set daemon 120
 set log /var/log/monit.log
+
+set mailserver localhost
+set mail-format {
+    from: monit@nonuso.net
+    subject: [NONUSO-SERVER] Monit: $EVENT $SERVICE
+    message: $EVENT Service $SERVICE
+                 Date:        $DATE
+                 Action:      $ACTION
+                 Host:        $HOST
+                 Description: $DESCRIPTION
+}
+
+set alert vmaltarello@gmail.com
 
 set httpd port 2812 and
     use address localhost
@@ -904,7 +1136,7 @@ MONIT_EOF
     # Script monitor
     cat > /usr/local/bin/nonuso-monitor << 'MONITOR_EOF'
 #!/bin/bash
-echo "=== SYSTEM STATUS ==="
+echo "=== NONUSO.NET SYSTEM STATUS ==="
 echo "Time: $(date)"
 echo
 echo "=== LOAD ==="
@@ -917,10 +1149,16 @@ echo "=== DISK ==="
 df -h
 echo
 echo "=== DOCKER ==="
-docker ps
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 echo
 echo "=== FAIL2BAN ==="
-fail2ban-client status
+fail2ban-client status | grep "Jail list" || echo "Fail2ban not running"
+echo
+echo "=== LAST LOGINS ==="
+last -5
+echo
+echo "=== ACTIVE CONNECTIONS ==="
+ss -tunap | grep ESTABLISHED | head -10
 MONITOR_EOF
 
     chmod +x /usr/local/bin/nonuso-monitor
@@ -970,7 +1208,7 @@ case "$1" in
         $0 start
         ;;
     status)
-        docker ps
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         ;;
     logs)
         cd /home/unonuso/nonuso_net
@@ -979,11 +1217,14 @@ case "$1" in
     backup)
         /usr/local/bin/nonuso-backup
         ;;
+    backup-deploy)
+        /usr/local/bin/backup-deploy
+        ;;
     monitor)
         /usr/local/bin/nonuso-monitor
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|logs|backup|monitor}"
+        echo "Usage: $0 {start|stop|restart|status|logs|backup|backup-deploy|monitor}"
         exit 1
         ;;
 esac
@@ -1007,47 +1248,75 @@ Auth: SOLO CHIAVE SSH
 Connessione:
 ssh -p ${SSH_PORT} ${APP_USER}@IP_SERVER
 
-2. FIREWALL
------------
+2. FIREWALL (UFW)
+-----------------
 Porte aperte:
 - ${SSH_PORT}/tcp (SSH)
 - 80/tcp (HTTP)
 - 443/tcp (HTTPS)
 
-3. SSL
-------
+3. SSL/HTTPS
+------------
 Dominio: ${DOMAIN}
 Certificati: /etc/letsencrypt/live/${DOMAIN}/
+Auto-renewal: Configurato
 
 4. BACKUP
 ---------
-Directory: ${BACKUP_DIR}
-Password: /root/.backup_password
+Directory locale: ${BACKUP_DIR}
+Google Drive: ${GDRIVE_BASE}/
+Password decrypt: /root/.backup_password
 Schedule: 2:00 AM giornaliero
 
-5. MONITORAGGIO
+5. EMAIL
+--------
+Notifiche a: ${EMAIL}
+Tag filtro: [NONUSO-SERVER]
+
+6. MONITORAGGIO
 ---------------
-Monit: ssh -L 2812:localhost:2812 user@server
-Poi: http://localhost:2812 (admin/monit)
+Monit: http://localhost:2812 (admin/monit)
+SSH tunnel: ssh -L 2812:localhost:2812 user@server
 
-6. COMANDI
-----------
+7. COMANDI UTILI
+----------------
 nonuso start|stop|restart|status|logs|backup|monitor
+nonuso-restore-gdrive list|download|restore
 
-7. PROSSIMI PASSI
+8. GITHUB ACTIONS
 -----------------
-1. Aggiungi tua chiave SSH:
+Chiave salvata in: /root/.ssh/github_actions_ed25519
+Backup deploy: /usr/local/bin/backup-deploy
+
+9. GOOGLE DRIVE
+---------------
+Struttura:
+${GDRIVE_BASE}/
+├── backups/          # Backup database
+├── credentials/      # Password e chiavi
+└── deploy-backups/   # Backup pre-deploy
+
+10. PROSSIMI PASSI
+------------------
+1. Testa connessione SSH sulla nuova porta:
+   ssh -p ${SSH_PORT} ${APP_USER}@SERVER_IP
+
+2. Aggiungi tua chiave SSH pubblica:
    echo "TUA_CHIAVE_PUBBLICA" >> /home/${APP_USER}/.ssh/authorized_keys
 
-2. Disabilita password SSH:
+3. Disabilita password SSH:
    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
    systemctl restart sshd
 
-3. Configura DNS per ${DOMAIN}
+4. Configura DNS per ${DOMAIN}
 
-4. Test backup:
-   nonuso backup
+5. Verifica backup su Drive:
+   rclone ls gdrive:/${GDRIVE_BASE}/
 
+===============================================
+IMPORTANTE: Password decrypt backup salvata in:
+- /root/.backup_password
+- Google Drive/${GDRIVE_BASE}/credentials/
 ===============================================
 REPORT_EOF
 
@@ -1062,8 +1331,11 @@ REPORT_EOF
 
 main() {
     log INFO "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log INFO "NONUSO.NET PRODUCTION SERVER SETUP"
+    log INFO "NONUSO.NET PRODUCTION SERVER SETUP v2.1"
     log INFO "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # Trap errori
+    trap 'log ERROR "Errore alla linea $LINENO. Exit code: $?"' ERR
     
     check_prerequisites
     setup_base_system
@@ -1081,13 +1353,20 @@ main() {
     
     echo
     log SECURE "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log SECURE "SETUP COMPLETATO!"
+    log SECURE "SETUP COMPLETATO CON SUCCESSO!"
     log SECURE "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo
-    log WARN "AZIONI RICHIESTE:"
+    log WARN "AZIONI IMMEDIATE RICHIESTE:"
     log WARN "1. SALVA la chiave GitHub Actions mostrata sopra"
-    log WARN "2. AGGIORNA firewall per porta ${SSH_PORT}"
-    log WARN "3. RIAVVIA SSH: systemctl restart sshd"
+    log WARN "2. NON disconnetterti ancora!"
+    log WARN "3. Da ALTRA finestra terminal, testa SSH:"
+    log WARN "   ssh -p ${SSH_PORT} ${APP_USER}@$(curl -s ifconfig.me)"
+    log WARN "4. SOLO quando funziona, riavvia SSH:"
+    log WARN "   systemctl restart sshd"
+    echo
+    log INFO "Password backup salvata in:"
+    log INFO "- Locale: /root/.backup_password"
+    log INFO "- Google Drive: ${GDRIVE_BASE}/credentials/MASTER-DECRYPT-PASSWORD.txt"
     echo
     cat "${SECURITY_REPORT}"
 }
