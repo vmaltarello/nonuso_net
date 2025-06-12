@@ -87,7 +87,7 @@ jobs:
         echo "${{ secrets.ONESIGNAL_API_KEY }}" > onesignal_api_key.txt
         echo "${{ secrets.ONESIGNAL_APP_ID }}" > onesignal_app_id.txt
         echo "${{ secrets.REDIS_PASSWORD }}" > redis_password.txt  
-        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+        rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
           db_connection.txt \
           postgres_password.txt \
           redis_connection.txt \
