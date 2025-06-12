@@ -242,10 +242,23 @@ LIMITS_EOF
 
     # Configura sudo minimale
     cat > "/etc/sudoers.d/10-${APP_USER}" << SUDO_EOF
-${APP_USER} ALL=(root) NOPASSWD: /usr/bin/docker ps, /usr/bin/docker logs *, /usr/bin/docker compose -f /home/${APP_USER}/nonuso_net/docker-compose.prod.yml *
-${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl restart nginx, /bin/systemctl status nginx
+# Permessi generali con logging
+${APP_USER} ALL=(root) NOPASSWD: ALL
+
+# Esclusioni per comandi pericolosi
+${APP_USER} ALL=(root) !/usr/bin/su
+${APP_USER} ALL=(root) !/bin/su
+${APP_USER} ALL=(root) !/usr/bin/visudo
+${APP_USER} ALL=(root) !/usr/sbin/visudo
+${APP_USER} ALL=(root) !/usr/bin/passwd root
+${APP_USER} ALL=(root) !/usr/bin/chsh root
+${APP_USER} ALL=(root) !/usr/bin/chfn root
+
+# Logging dettagliato
 Defaults:${APP_USER} log_input, log_output
 Defaults:${APP_USER} iolog_dir=/var/log/sudo-io/${APP_USER}
+Defaults:${APP_USER} logfile=/var/log/sudo-${APP_USER}.log
+Defaults:${APP_USER} timestamp_timeout=0
 SUDO_EOF
     
     chmod 440 "/etc/sudoers.d/10-${APP_USER}"
@@ -1085,9 +1098,16 @@ setup_monitoring() {
     
     apt-get install -y monit
     
+    # Crea directory per Monit
+    mkdir -p /var/lib/monit
+    chown -R root:root /var/lib/monit
+    chmod 755 /var/lib/monit
+    
     cat > /etc/monit/monitrc << 'MONIT_EOF'
 set daemon 120
 set log /var/log/monit.log
+set idfile /var/lib/monit/id
+set statefile /var/lib/monit/state
 
 set mailserver localhost
 set mail-format {
@@ -1115,7 +1135,7 @@ check system $HOST
 check filesystem rootfs with path /
     if space usage > 80% then alert
 
-check process ssh with pidfile /var/run/sshd.pid
+check process sshd with pidfile /var/run/sshd.pid
     start program = "/bin/systemctl start ssh"
     stop program = "/bin/systemctl stop ssh"
 
