@@ -1109,55 +1109,97 @@ setup_monitoring() {
     chown -R root:root /var/lib/monit
     chmod 755 /var/lib/monit
     
+    # Configurazione Monit
+    log INFO "Configurando Monit..."
     cat > /etc/monit/monitrc << 'MONIT_EOF'
-set daemon 120
-set log /var/log/monit.log
-set idfile /var/lib/monit/id
-set statefile /var/lib/monit/state
+# Configurazione email
+set mailserver smtp.gmail.com port 587
+    username "vmaltarello@gmail.com" password "wqkq qqnv qqnv qqnv"
+    using tlsv12
+    with timeout 30 seconds
 
-set mailserver localhost
 set mail-format {
-    from: monit@nonuso.net
-    subject: [NONUSO-SERVER] Monit: $EVENT $SERVICE
-    message: $EVENT Service $SERVICE
-                 Date:        $DATE
-                 Action:      $ACTION
-                 Host:        $HOST
-                 Description: $DESCRIPTION
+    from: Monit <vmaltarello@gmail.com>
+    subject: $SERVICE $EVENT at $DATE
+    message: Monit $ACTION $SERVICE at $DATE on $HOST: $DESCRIPTION.
+            Yours sincerely,
+            monit
 }
 
 set alert vmaltarello@gmail.com
 
+# Configurazione base
+set daemon 60
+set logfile /var/log/monit.log
+set idfile /var/lib/monit/id
+set statefile /var/lib/monit/state
+
+# Interfaccia web
 set httpd port 2812 and
     use address localhost
     allow localhost
-    allow admin:monit
+    allow unonuso:monit
 
-check system $HOST
-    if loadavg (5min) > 4 then alert
-    if memory usage > 90% then alert
-    if cpu usage > 80% for 2 cycles then alert
+# Monitoraggio sistema
+check system $HOSTNAME
+    if loadavg (1min) > 4 then alert
+    if loadavg (5min) > 2 then alert
+    if memory usage > 80% then alert
+    if swap usage > 20% then alert
+    if cpu usage (user) > 80% then alert
+    if cpu usage (system) > 20% then alert
+    if cpu usage (wait) > 80% then alert
 
+# Monitoraggio disco
 check filesystem rootfs with path /
     if space usage > 80% then alert
+    if inode usage > 80% then alert
 
-check process sshd with pidfile /var/run/sshd.pid
-    start program = "/bin/systemctl start ssh"
-    stop program = "/bin/systemctl stop ssh"
+# Monitoraggio Docker
+check program docker with path "/usr/bin/docker info"
+    if status != 0 then alert
+    every 5 cycles
+
+# Monitoraggio applicazione
+check host api.nonuso.com with address api.nonuso.com
+    if failed port 443 protocol https
+        with timeout 10 seconds
+        for 3 cycles
+    then alert
+    else if recovered then alert
+
+# Monitoraggio servizi
+check process docker with pidfile /var/run/docker.pid
+    start program = "/usr/bin/systemctl start docker"
+    stop program = "/usr/bin/systemctl stop docker"
+    if failed unixsocket /var/run/docker.sock then restart
+    if 5 restarts within 5 cycles then timeout
 
 check process nginx with pidfile /var/run/nginx.pid
-    start program = "/bin/systemctl start nginx"
-    stop program = "/bin/systemctl stop nginx"
+    start program = "/usr/bin/systemctl start nginx"
+    stop program = "/usr/bin/systemctl stop nginx"
+    if failed host api.nonuso.com port 443 protocol https then restart
+    if 5 restarts within 5 cycles then timeout
 
-check process docker with pidfile /var/run/docker.pid
-    start program = "/bin/systemctl start docker"
-    stop program = "/bin/systemctl stop docker"
+check process certbot with pidfile /var/run/certbot.pid
+    start program = "/usr/bin/systemctl start certbot"
+    stop program = "/usr/bin/systemctl stop certbot"
+    if 5 restarts within 5 cycles then timeout
+
+check process rclone with pidfile /var/run/rclone.pid
+    start program = "/usr/bin/systemctl start rclone"
+    stop program = "/usr/bin/systemctl stop rclone"
+    if 5 restarts within 5 cycles then timeout
+
+check process monit with pidfile /var/run/monit.pid
+    start program = "/usr/bin/systemctl start monit"
+    stop program = "/usr/bin/systemctl stop monit"
+    if 5 restarts within 5 cycles then timeout
 MONIT_EOF
 
-    chmod 700 /etc/monit/monitrc
+    chmod 600 /etc/monit/monitrc
     systemctl restart monit
-    systemctl enable monit
-    
+
     # Script monitor
     cat > /usr/local/bin/nonuso-monitor << 'MONITOR_EOF'
 #!/bin/bash
