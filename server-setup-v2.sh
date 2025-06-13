@@ -926,47 +926,6 @@ BACKUP_EOF
 
     chmod +x /usr/local/bin/nonuso-backup
     
-    # Script per backup deploy da GitHub Actions
-    cat > /usr/local/bin/backup-deploy << 'DEPLOY_EOF'
-#!/bin/bash
-set -euo pipefail
-
-DEPLOY_BACKUP_DIR="/opt/deploy-backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-APP_DIR="/home/unonuso/nonuso_net"
-GDRIVE_BASE="NonusoApp-VPS1"
-
-mkdir -p "${DEPLOY_BACKUP_DIR}"
-chown unonuso:unonuso "${DEPLOY_BACKUP_DIR}"
-chmod 750 "${DEPLOY_BACKUP_DIR}"
-
-cd "${APP_DIR}"
-
-# Backup pre-deploy
-tar czf "${DEPLOY_BACKUP_DIR}/pre-deploy-${DATE}.tar.gz" \
-    --exclude="node_modules" \
-    --exclude=".git" \
-    --exclude="*.log" \
-    .
-
-# Upload su Google Drive
-if command -v rclone &> /dev/null && rclone listremotes | grep -q "gdrive:"; then
-    rclone mkdir "gdrive:/${GDRIVE_BASE}/deploy-backups/$(date +%Y-%m)" || true
-    rclone move "${DEPLOY_BACKUP_DIR}/pre-deploy-${DATE}.tar.gz" \
-        "gdrive:/${GDRIVE_BASE}/deploy-backups/$(date +%Y-%m)/" || true
-fi
-
-# Pulizia locale
-ls -t ${DEPLOY_BACKUP_DIR}/pre-deploy-*.tar.gz 2>/dev/null | tail -n +4 | xargs rm -f || true
-
-# Pulizia Drive (più vecchi di 7 giorni)
-rclone delete "gdrive:/${GDRIVE_BASE}/deploy-backups" --min-age 7d || true
-
-echo "Deploy backup completato"
-DEPLOY_EOF
-
-    chmod +x /usr/local/bin/backup-deploy
-    
     # Script restore da Google Drive
     cat > /usr/local/bin/nonuso-restore-gdrive << 'RESTORE_EOF'
 #!/bin/bash
