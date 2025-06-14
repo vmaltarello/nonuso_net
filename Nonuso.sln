@@ -40,8 +40,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Storage", "I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Infrastructure.Storage", "Infrastructure\Infrastructure.Storage\Nonuso.Infrastructure.Storage.csproj", "{CFFA1E19-A32F-4CA2-927E-D3777F9E316F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Notification", "Infrastructure.Notification", "{F8A179B8-0B55-4F0B-B47F-4ABD056AC921}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Redis", "Infrastructure.Redis", "{47AE7A81-0780-4C2E-856A-8041AADA6F1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Infrastructure.Redis", "Infrastructure\Infrastructure.Redis\Nonuso.Infrastructure.Redis.csproj", "{0D3FF7C1-4CA3-4EF7-BE4A-AFAA3A6E4B00}"
@@ -50,7 +48,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Secret", "In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Infrastructure.Secret", "Infrastructure\Infrastructure.Secret\Nonuso.Infrastructure.Secret.csproj", "{EAAAB22E-41D5-4E35-901C-F1A04D9D1EE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Infrastructure.Notification", "Infrastructure\Infrastructure.Notification\Nonuso.Infrastructure.Notification.csproj", "{F1F64184-3DC0-41C3-BD6B-F11D1D451C85}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.Notification", "Infrastructure.Notification", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nonuso.Infrastructure.Notification", "Infrastructure\Infrastructure.Notification\Nonuso.Infrastructure.Notification.csproj", "{E9D44750-17C4-9A1A-1BD2-DFDE4A9440EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,10 +98,10 @@ Global
 		{EAAAB22E-41D5-4E35-901C-F1A04D9D1EE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAAAB22E-41D5-4E35-901C-F1A04D9D1EE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAAAB22E-41D5-4E35-901C-F1A04D9D1EE3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F1F64184-3DC0-41C3-BD6B-F11D1D451C85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F1F64184-3DC0-41C3-BD6B-F11D1D451C85}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F1F64184-3DC0-41C3-BD6B-F11D1D451C85}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F1F64184-3DC0-41C3-BD6B-F11D1D451C85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9D44750-17C4-9A1A-1BD2-DFDE4A9440EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9D44750-17C4-9A1A-1BD2-DFDE4A9440EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9D44750-17C4-9A1A-1BD2-DFDE4A9440EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9D44750-17C4-9A1A-1BD2-DFDE4A9440EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -113,11 +113,14 @@ Global
 		{165D6CC9-3234-438B-B961-12905E8A1AC7} = {9CF16DE2-B0F8-45F3-951C-DFC81647291F}
 		{6846FE66-236D-464C-861E-29C588C4C2D6} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
 		{CFFA1E19-A32F-4CA2-927E-D3777F9E316F} = {6846FE66-236D-464C-861E-29C588C4C2D6}
-		{F8A179B8-0B55-4F0B-B47F-4ABD056AC921} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
 		{47AE7A81-0780-4C2E-856A-8041AADA6F1D} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
 		{0D3FF7C1-4CA3-4EF7-BE4A-AFAA3A6E4B00} = {47AE7A81-0780-4C2E-856A-8041AADA6F1D}
 		{D09A5ED6-807D-4F98-BF47-2BA3399F3D3C} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
 		{EAAAB22E-41D5-4E35-901C-F1A04D9D1EE3} = {D09A5ED6-807D-4F98-BF47-2BA3399F3D3C}
-		{F1F64184-3DC0-41C3-BD6B-F11D1D451C85} = {F8A179B8-0B55-4F0B-B47F-4ABD056AC921}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {82F277C0-7936-4CE2-9C83-12B590AE36CE}
+		{E9D44750-17C4-9A1A-1BD2-DFDE4A9440EF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {71B25646-9E52-4997-B226-4A9CD7937EE8}
 	EndGlobalSection
 EndGlobal

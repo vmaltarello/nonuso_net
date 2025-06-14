@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Nonuso.Application.IServices;
 using Nonuso.Infrastructure.Notification.Services;
+
 namespace Nonuso.Infrastructure.Notification
 {
     public static partial class IServiceCollectionExtensions
