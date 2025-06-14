@@ -14,6 +14,6 @@ namespace Nonuso.Application.IServices
         Task ChangeUserNameAsync(Guid userId, string userName);
         Task<UserResultModel> RefreshTokenAsync(RefreshTokenParamModel model);
         Task<bool> UserNameIsUniqueAsync(string userName);
-        Task ConfirmEmailAsync(string token, string email);
+        Task<UserResultModel?> ConfirmEmailAsync(AuthConfirmEmailParamModel model);
     }
 }

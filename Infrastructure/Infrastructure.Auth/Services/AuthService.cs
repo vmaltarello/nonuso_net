@@ -190,12 +190,17 @@ namespace Nonuso.Infrastructure.Auth.Services
             return await _userManager.FindByNameAsync(userName.Trim()) == null;
         }
 
-        public async Task ConfirmEmailAsync(string token, string email)
+        public async Task<UserResultModel?> ConfirmEmailAsync(AuthConfirmEmailParamModel model)
         {
-            var user = await _userManager.FindByEmailAsync(email)
-                ?? throw new EntityNotFoundException(nameof(User), email);
+            var user = await _userManager.FindByEmailAsync(model.Email)
+                ?? throw new EntityNotFoundException(nameof(User), model.Email);
 
-            await _userManager.ConfirmEmailAsync(user, token);
+            var result = await _userManager.ConfirmEmailAsync(user, model.Token);
+
+            if(result.Succeeded)
+                return await BuildTokens(user);
+
+            return null;
         }
 
         #region PRIVATE

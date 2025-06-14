@@ -68,11 +68,10 @@ namespace Nonuso.Api.Controllers
             return Ok(await _authService.UserNameIsUniqueAsync(userName));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> ConfirmEmail(string token, string email)
+        [HttpPost]
+        public async Task<IActionResult> ConfirmEmail(AuthConfirmEmailParamModel model)
         {
-            await _authService.ConfirmEmailAsync(token, email);
-            return Ok();
+            return Ok(await _authService.ConfirmEmailAsync(model));
         }
 
         [Authorize]
