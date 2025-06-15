@@ -11,4 +11,11 @@
         public required string Token { get; set; } 
         public required string Email { get; set; }
     }
+
+    public class ResetPasswordParamModel
+    {
+        public required string Email { get; set; }
+        public required string Password { get; set; }
+        public required string Token { get; set; }
+    }
 }

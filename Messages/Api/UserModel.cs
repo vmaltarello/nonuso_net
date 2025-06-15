@@ -10,7 +10,7 @@ namespace Nonuso.Messages.Api
 
     }
 
-    public class  UserChangePasswordModel 
+    public class  UserChangePasswordParamModel 
     {
         public required string Password { get; set; }
     }

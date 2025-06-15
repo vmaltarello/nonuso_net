@@ -70,10 +70,16 @@ namespace Nonuso.Api.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> ChangePassword(UserChangePasswordModel model)
+        public async Task<IActionResult> ChangePassword(UserChangePasswordParamModel model)
         {
             await _authService.ChangePasswordAsync(model.Password, _currentUser.Id);
             return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordParamModel model)
+        {
+            return Ok(await _authService.ResetPasswordAsync(model));
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -192,6 +193,19 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             if (result.Succeeded)
                 return await BuildTokens(user);
+
+            return null;
+        }
+
+        public async Task<UserResultModel?> ResetPasswordAsync(ResetPasswordParamModel model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email)
+                ?? throw new AuthUnauthorizedException();
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.Password);
+
+            if(result.Succeeded) return await BuildTokens(user);
 
             return null;
         }
