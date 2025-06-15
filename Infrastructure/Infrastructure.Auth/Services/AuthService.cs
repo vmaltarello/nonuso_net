@@ -23,11 +23,11 @@ namespace Nonuso.Infrastructure.Auth.Services
     public class AuthService(
         ILogger<AuthService> logger,
         IDomainValidatorFactory validatorFactory,
-        UserManager<User> userManager, 
-        SignInManager<User> signInManager, 
+        UserManager<User> userManager,
+        SignInManager<User> signInManager,
         IAuthRepository authRepository,
         INotificationService oneSignalService,
-        IConfiguration configuration,        
+        IConfiguration configuration,
         ISecretManager secretManager) : IAuthService
     {
         readonly ILogger<AuthService> _logger = logger;
@@ -97,7 +97,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             var result = await _userManager.CreateAsync(entity, model.Password);
 
-            if(result.Succeeded)
+            if (result.Succeeded)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user != null)
@@ -112,21 +112,19 @@ namespace Nonuso.Infrastructure.Auth.Services
 
         public async Task<UserResultModel> SignInAsync(UserSignInParamModel model)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, true, false);
-            
+            var user = await _userManager.FindByEmailAsync(model.Email) ??
+                throw new AuthWrongCredentialException(_wrongCredentialMessage);
+
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, true, false);
+
             if (result.Succeeded)
             {
-                var user = await _userManager.FindByNameAsync(model.UserName);
+                if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
 
-                if (user != null)
-                {
-                    if (!user.EmailConfirmed || !user.IsEnabled) throw new AuthWrongCredentialException(_wrongCredentialMessage);
+                user.LastSignInAt = DateTime.UtcNow;
+                await _userManager.UpdateAsync(user);
 
-                    user.LastSignInAt = DateTime.UtcNow;
-                    await _userManager.UpdateAsync(user);
-
-                    return await BuildTokens(user);                   
-                }
+                return await BuildTokens(user);
             }
 
             throw new AuthWrongCredentialException(_wrongCredentialMessage);
@@ -138,7 +136,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             var refreshToken = await _authRepository.GetRefreshTokenByUserIdAsync(id);
 
-            if(refreshToken != null)
+            if (refreshToken != null)
                 await _authRepository.RevokeRefreshTokenAsync(refreshToken);
         }
 
@@ -146,7 +144,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         {
             var user = await _userManager.FindByIdAsync(id.ToString())
                 ?? throw new EntityNotFoundException(nameof(User), id);
-            
+
             await _authRepository.DeleteAsync(user);
 
             var refreshToken = await _authRepository.GetRefreshTokenByUserIdAsync(id);
@@ -184,11 +182,6 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             return await BuildTokens(storedToken.User!);
         }
-   
-        public async Task<bool> UserNameIsUniqueAsync(string userName)
-        {
-            return await _userManager.FindByNameAsync(userName.Trim()) == null;
-        }
 
         public async Task<UserResultModel?> ConfirmEmailAsync(AuthConfirmEmailParamModel model)
         {
@@ -197,7 +190,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             var result = await _userManager.ConfirmEmailAsync(user, model.Token);
 
-            if(result.Succeeded)
+            if (result.Succeeded)
                 return await BuildTokens(user);
 
             return null;

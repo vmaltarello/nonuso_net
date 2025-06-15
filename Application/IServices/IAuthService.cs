@@ -13,7 +13,6 @@ namespace Nonuso.Application.IServices
         Task ChangePasswordAsync(string password, Guid userId);
         Task ChangeUserNameAsync(Guid userId, string userName);
         Task<UserResultModel> RefreshTokenAsync(RefreshTokenParamModel model);
-        Task<bool> UserNameIsUniqueAsync(string userName);
         Task<UserResultModel?> ConfirmEmailAsync(AuthConfirmEmailParamModel model);
     }
 }

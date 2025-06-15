@@ -37,8 +37,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         {
             entity.IsEnabled = false;
             entity.DeletedAt = DateTime.UtcNow;
-            entity.UserName += "_deleted";
-            entity.Email += "_deleted";
+            entity.Email += $"_deleted_{entity.Id}";
 
             _context.Users.Update(entity);
 
