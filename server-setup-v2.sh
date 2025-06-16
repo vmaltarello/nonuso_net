@@ -458,7 +458,7 @@ logfile        /var/log/msmtp.log
 account        gmail
 host           smtp.gmail.com
 port           587
-from           ${EMAIL}
+from           server-alert@nonuso.com
 user           ${EMAIL}
 password       ${gmail_app_password}
 tls_starttls  on
@@ -986,7 +986,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 0 2 * * * root /usr/local/bin/nonuso-backup >> /var/log/nonuso/backup-cron.log 2>&1
 
 # Check spazio disco ogni 6 ore
-0 */6 * * * root df -h | grep -E "^/dev/" | awk '{if(int($5)>85) print "Spazio disco warning: "$6" is "$5" full"}' | mail -s "[NONUSO-SERVER] Disk Space Alert" vmaltarello@gmail.com || true
+0 */6 * * * root df -h / /home | grep -E "^/dev/" | awk 'int(substr($5,1,length($5)-1)) > 85 {print "Spazio disco: " $6 " è al " $5 " di utilizzo"}' | while read line; do [ -n "$line" ] && echo "$line" | mail -s "[NONUSO-SERVER] Disk Space Critical" vmaltarello@gmail.com; done
 CRON_EOF
 
     log SECURE "Backup configurato con Google Drive"
