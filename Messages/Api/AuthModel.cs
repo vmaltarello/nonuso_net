@@ -12,6 +12,11 @@
         public required string Email { get; set; }
     }
 
+    public class  RequestResetPasswordParamModel
+    {
+        public required string Email { get; set; }
+    }
+
     public class ResetPasswordParamModel
     {
         public required string Email { get; set; }

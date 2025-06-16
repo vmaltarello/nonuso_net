@@ -36,7 +36,7 @@ namespace Nonuso.Infrastructure.Notification.Services
             _presenceRepository = presenceRepository;
         }
 
-        public async Task SendConfirmEmailAsync(User user, string tokenConfirmEmail)
+        public async Task SendConfirmEmailAsync(User user, string link)
         {
             var obj = new
             {
@@ -48,7 +48,29 @@ namespace Nonuso.Infrastructure.Notification.Services
                 include_email_tokens = new string[] { user.Email! },
                 custom_data = new
                 {
-                    action_link = tokenConfirmEmail,
+                    action_link = link,
+                    username = user.UserName,
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(obj);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), content);
+        }
+
+        public async Task SendRequestResetPasswordEmailAsync(User user, string link)
+        {
+            var obj = new
+            {
+                app_id = _appId,
+                template_id = _configuration["OneSignal:Template:RequestResetPasswordEmailTemplateId"],
+                include_unsubscribed = true,
+                target_channel = "email",
+                email_subject = "Richiesta reset password",
+                include_email_tokens = new string[] { user.Email! },
+                custom_data = new
+                {
+                    action_link = link,
                     username = user.UserName,
                 }
             };

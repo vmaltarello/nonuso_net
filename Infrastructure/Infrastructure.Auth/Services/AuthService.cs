@@ -105,8 +105,8 @@ namespace Nonuso.Infrastructure.Auth.Services
                 {
                     var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     var encodedToken = WebUtility.UrlEncode(token);
-                    var tokenConfirmEmail = $"nonuso.app://confirmEmail?token={encodedToken}&email={model.Email}";
-                    await _oneSignalService.SendConfirmEmailAsync(user, tokenConfirmEmail);
+                    var link = $"nonuso.app://confirmEmail?token={encodedToken}&email={model.Email}";
+                    await _oneSignalService.SendConfirmEmailAsync(user, link);
                 }
             }
         }
@@ -208,6 +208,19 @@ namespace Nonuso.Infrastructure.Auth.Services
             if(result.Succeeded) return await BuildTokens(user);
 
             return null;
+        }
+
+        public async Task RequestResetPasswordAsync(RequestResetPasswordParamModel model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user != null)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var encodedToken = WebUtility.UrlEncode(token);
+                var link = $"nonuso.app://resetPassword?token={encodedToken}&email={model.Email}";
+                await _oneSignalService.SendRequestResetPasswordEmailAsync(user, link);
+            }
         }
 
         #region PRIVATE

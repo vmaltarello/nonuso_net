@@ -77,6 +77,13 @@ namespace Nonuso.Api.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> RequestResetPassword(RequestResetPasswordParamModel model)
+        {
+            await _authService.RequestResetPasswordAsync(model);
+            return Ok();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordParamModel model)
         {
             return Ok(await _authService.ResetPasswordAsync(model));
