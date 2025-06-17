@@ -11,7 +11,7 @@ using NpgsqlTypes;
 namespace Nonuso.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class Migration_0 : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -39,7 +39,7 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     IsEnabled = table.Column<bool>(type: "boolean", nullable: false),
-                    AvatarURL = table.Column<string>(type: "text", nullable: false),
+                    AvatarURL = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     LastSignInAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -403,6 +403,41 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Review",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReviewerUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReviewedUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductRequestId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Stars = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Review", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Review_AspNetUsers_ReviewedUserId",
+                        column: x => x.ReviewedUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Review_AspNetUsers_ReviewerUserId",
+                        column: x => x.ReviewerUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Review_ProductRequest_ProductRequestId",
+                        column: x => x.ProductRequestId,
+                        principalTable: "ProductRequest",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ConversationInfo",
                 columns: table => new
                 {
@@ -675,6 +710,21 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Review_ProductRequestId",
+                table: "Review",
+                column: "ProductRequestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Review_ReviewedUserId",
+                table: "Review",
+                column: "ReviewedUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Review_ReviewerUserId",
+                table: "Review",
+                column: "ReviewerUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserBlock_BlockedId",
                 table: "UserBlock",
                 column: "BlockedId");
@@ -728,6 +778,9 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
+
+            migrationBuilder.DropTable(
+                name: "Review");
 
             migrationBuilder.DropTable(
                 name: "UserBlock");

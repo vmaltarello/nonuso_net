@@ -11,10 +11,10 @@ namespace Nonuso.Domain.Entities
         public Guid ConversationId { get; set; }
         
         [Required]
-        public Guid SenderId { get; set; }
+        public required Guid SenderId { get; set; }
 
         [Required]
-        public string? Content { get; set; }
+        public required string Content { get; set; }
 
         public bool IsAttachment { get; set; } = false;
 
@@ -22,9 +22,9 @@ namespace Nonuso.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("ConversationId")]
-        public Conversation? Conversation { get; set; }
+        public virtual Conversation? Conversation { get; set; }
 
         [ForeignKey("SenderId")]
-        public User? SenderUser { get; set; }
+        public virtual User? SenderUser { get; set; }
     }
 }

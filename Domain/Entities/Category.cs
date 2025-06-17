@@ -8,12 +8,12 @@ namespace Nonuso.Domain.Entities
         [Required]
         [MinLength(5)]
         [MaxLength(255)]
-        public string Description { get; set; } = string.Empty;
+        public string Description { get; set; } = null!;
 
         [Required]
         [MinLength(5)]
         [MaxLength(255)]
-        public string DescriptionEN { get; set; } = string.Empty;
+        public string DescriptionEN { get; set; } = null!;
 
     }
 }

@@ -22,6 +22,7 @@ namespace Nonuso.Infrastructure.Persistence
         public DbSet<Message> Message { get; set; }
         public DbSet<ConversationInfo> ConversationInfo { get; set; }
         public DbSet<UserBlock> UserBlock { get; set; }
+        public DbSet<Review> Review { get; set; }
 
         #endregion
 
@@ -31,11 +32,6 @@ namespace Nonuso.Infrastructure.Persistence
 
             modelBuilder.ApplyConfiguration(new RoleConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
-
-            //modelBuilder.Entity<Product>()
-            //    .HasOne(x => x.Category)
-            //    .WithMany()
-            //    .HasForeignKey(x => x.CategoryId);
 
             modelBuilder.Entity<Product>(entity =>
             {
@@ -52,33 +48,6 @@ namespace Nonuso.Infrastructure.Persistence
                 entity.HasIndex(p => p.Location).HasMethod("GIST");
 
             });
-
-            modelBuilder.Entity<ProductHistory>()
-              .HasOne(x => x.User)
-              .WithMany()
-              .HasForeignKey(x => x.UserId);
-
-            modelBuilder.Entity<Favorite>()
-             .HasOne(x => x.User)
-             .WithMany()
-             .HasForeignKey(x => x.UserId);
-
-            modelBuilder.Entity<Favorite>()
-            .HasOne(x => x.Product)
-            .WithMany()
-            .HasForeignKey(x => x.ProductId);
-
-            modelBuilder.Entity<LastSearch>()
-             .HasOne(x => x.User)
-             .WithMany()
-             .HasForeignKey(x => x.UserId);
-
-            //modelBuilder.Entity<Favorite>().HasIndex("OwnerId");
-            //modelBuilder.Entity<Product>().HasIndex("OwnerId");
-            //modelBuilder.Entity<ProductHistory>().HasIndex("UserId");
-
-            //modelBuilder.ApplyConfiguration(new RoleConfiguration());
-
         }
     }
 }

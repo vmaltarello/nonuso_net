@@ -29,6 +29,7 @@ namespace Nonuso.Application
                .ReverseMap();
 
             #endregion
+
             CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
             CreateMap<Conversation, ConversationResultModel>();
             CreateMap<User, UserModel>().ReverseMap();
@@ -36,7 +37,9 @@ namespace Nonuso.Application
             CreateMap<ChatModel, ChatResultModel>();
             CreateMap<MessageModel, ChatResultModel>();
             CreateMap<MessageModel, MessageResultModel>();
-            CreateMap<Favorite, FavoriteResultModel>().ReverseMap();           
+            CreateMap<Favorite, FavoriteResultModel>().ReverseMap();
+
+            CreateMap<ReviewParamModel, Review>();
         }
     }
 }

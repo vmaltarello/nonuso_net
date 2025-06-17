@@ -1,5 +1,4 @@
-﻿using Nonuso.Domain.Entities;
-using Nonuso.Messages.Api;
+﻿using Nonuso.Messages.Api;
 
 namespace Nonuso.Application.IServices
 {

@@ -17,12 +17,12 @@ namespace Nonuso.Domain.Entities
     public class UserBlock : Entity
     {
         [Required]
-        public Guid BlockerId { get; set; }
+        public required Guid BlockerId { get; set; }
 
         [Required]
-        public Guid BlockedId { get; set; }
+        public required Guid BlockedId { get; set; }
 
-        public UserBlockReason Reason { get; set; }
+        public required UserBlockReason Reason { get; set; }
 
         public string? AdditionalInfo { get; set; }
 
@@ -32,12 +32,12 @@ namespace Nonuso.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("BlockerId")]
-        public User? Blocker { get; set; }
+        public virtual User? Blocker { get; set; }
 
         [ForeignKey("BlockedId")]
-        public User? Blocked { get; set; }
+        public virtual User? Blocked { get; set; }
 
         [ForeignKey("ConversationId")]
-        public Conversation? Conversation { get; set; }
+        public virtual Conversation? Conversation { get; set; }
     }
 }

@@ -31,10 +31,10 @@ namespace Nonuso.Domain.Entities
     public class ProductReport : Entity
     {
         [Required]
-        public Guid ProductId { get; set; }
+        public required Guid ProductId { get; set; }
 
         [Required]
-        public ReportProductReason Reason { get; set; }
+        public required ReportProductReason Reason { get; set; }
 
         [Required]
         public ReportProductStatus Status { get; set; } = ReportProductStatus.Pending;
@@ -43,7 +43,7 @@ namespace Nonuso.Domain.Entities
         public required string Description { get; set; }
 
         [Required]
-        public Guid UserId { get; set; }
+        public required Guid UserId { get; set; }
 
         [Required]
         public DateTime DateTime { get; set; } = DateTime.UtcNow;

@@ -1,5 +1,6 @@
 ﻿using Nonuso.Domain.Entities.Base;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Nonuso.Domain.Entities
 {
@@ -22,6 +23,7 @@ namespace Nonuso.Domain.Entities
 
         public DateTime? UpdatedAt { get; set; }
 
-        public required User User { get; set; }
+        [ForeignKey("UserId")]
+        public virtual User? User { get; set; }
     }
 }

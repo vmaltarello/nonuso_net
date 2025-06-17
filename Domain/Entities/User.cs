@@ -8,7 +8,7 @@ namespace Nonuso.Domain.Entities
         [Required]
         public bool IsEnabled { get; set; } = true;
 
-        public string AvatarURL { get; set; } = string.Empty;
+        public string? AvatarURL { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

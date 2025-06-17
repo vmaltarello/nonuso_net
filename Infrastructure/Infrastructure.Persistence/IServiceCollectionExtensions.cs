@@ -11,7 +11,7 @@ namespace Nonuso.Infrastructure.Persistence
         public static IServiceCollection AddInfrastructurePersistence(this IServiceCollection services, ISecretManager secretManager)
         {
             var connectionString = secretManager.GetConnectionString("dbConnection");
-
+                
             services.AddDbContext<NonusoDbContext>(options =>
                 options
                     .UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite())
@@ -27,6 +27,7 @@ namespace Nonuso.Infrastructure.Persistence
             services.AddScoped<IConversationRepository, ConversationRepository>();
             services.AddScoped<IChatRepository, ChatRepository>();
             services.AddScoped<IUserBlockedRepository, UserBlockedRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
 
             return services;
         }

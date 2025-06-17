@@ -701,6 +701,42 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                     b.ToTable("RefreshToken");
                 });
 
+            modelBuilder.Entity("Nonuso.Domain.Entities.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReviewedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReviewerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductRequestId");
+
+                    b.HasIndex("ReviewedUserId");
+
+                    b.HasIndex("ReviewerUserId");
+
+                    b.ToTable("Review");
+                });
+
             modelBuilder.Entity("Nonuso.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -711,7 +747,6 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("AvatarURL")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -1038,6 +1073,33 @@ namespace Nonuso.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nonuso.Domain.Entities.Review", b =>
+                {
+                    b.HasOne("Nonuso.Domain.Entities.ProductRequest", "ProductRequest")
+                        .WithMany()
+                        .HasForeignKey("ProductRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "ReviewedUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nonuso.Domain.Entities.User", "ReviewerUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductRequest");
+
+                    b.Navigation("ReviewedUser");
+
+                    b.Navigation("ReviewerUser");
                 });
 
             modelBuilder.Entity("Nonuso.Domain.Entities.UserBlock", b =>

@@ -10,16 +10,16 @@ namespace Nonuso.Domain.Entities
         public Guid ConversationId { get; set; }        
 
         [Required]
-        public Guid UserId { get; set; }      
+        public required Guid UserId { get; set; }      
 
         public bool Visible { get; set; } = true;
 
         public int UnreadCount { get; set; } = 0;
 
         [ForeignKey("ConversationId")]
-        public Conversation? Conversation { get; set; }
+        public virtual Conversation? Conversation { get; set; }
 
         [ForeignKey("UserId")]
-        public User? User { get; set; }
+        public virtual User? User { get; set; }
     }
 }

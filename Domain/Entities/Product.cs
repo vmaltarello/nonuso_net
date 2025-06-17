@@ -10,23 +10,23 @@ namespace Nonuso.Domain.Entities
     {
 
         [Required]
-        public Guid UserId { get; set; }
+        public required Guid UserId { get; set; }
 
         [Required]
         [StringLength(255)]
-        public string Title { get; set; } = string.Empty;
+        public required string Title { get; set; }
 
         [Required]
         [StringLength(500)]
-        public string Description { get; set; } = string.Empty;
+        public required string Description { get; set; }
 
-        public string? ImagesUrl { get; set; }
-
-        [Required]
-        public Guid CategoryId { get; set; }
+        public string? ImagesUrl { get; set; } = null;
 
         [Required]
-        public Point Location { get; set; } = null!;
+        public required Guid CategoryId { get; set; }
+
+        [Required]
+        public required Point Location { get; set; }
 
         [Required]
         [StringLength(255)]

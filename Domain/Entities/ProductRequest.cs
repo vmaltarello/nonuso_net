@@ -24,13 +24,13 @@ namespace Nonuso.Domain.Entities
     public class ProductRequest : Entity
     {
         [Required]
-        public Guid ProductId { get; set; }
+        public required Guid ProductId { get; set; }
 
         [Required]
-        public Guid RequesterId { get; set; }
+        public required Guid RequesterId { get; set; }
 
         [Required]
-        public Guid RequestedId { get; set; }
+        public required Guid RequestedId { get; set; }
 
         public Guid? ExchangeProductId { get; set; }
 
@@ -45,15 +45,15 @@ namespace Nonuso.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
 
         [ForeignKey("RequesterId")]
-        public User? RequesterUser { get; set; }
+        public virtual User? RequesterUser { get; set; }
         
         [ForeignKey("RequestedId")]
-        public User? RequestedUser { get; set; }
+        public virtual User? RequestedUser { get; set; }
 
         [ForeignKey("ProductId")]
-        public Product? Product { get; set; }
+        public virtual Product? Product { get; set; }
 
         [ForeignKey("ExchangeProductId")]
-        public Product? ExchangeProduct { get; set; }
+        public virtual Product? ExchangeProduct { get; set; }
     }
 }

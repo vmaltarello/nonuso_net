@@ -20,7 +20,6 @@ namespace Nonuso.Api.Controllers
         }
 
         [HttpGet]
-        [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)] // Cache 24 hours
         public async Task<IActionResult> GetAllPopular()
         {
             return Ok(await _categoryService.GetAllPopularAsync(_currentUser.Id));

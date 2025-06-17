@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Nonuso.Domain.Entities
 {
@@ -22,6 +23,7 @@ namespace Nonuso.Domain.Entities
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public User? User { get; set; }
+        [ForeignKey("UserId")]
+        public virtual User? User { get; set; }
     }
 }
