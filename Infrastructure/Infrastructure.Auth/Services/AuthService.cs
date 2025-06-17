@@ -214,7 +214,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
 
-            if (user != null)
+            if (user != null && user.EmailConfirmed && user.IsEnabled && !user.LockoutEnabled)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var encodedToken = WebUtility.UrlEncode(token);
