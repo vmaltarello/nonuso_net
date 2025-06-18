@@ -83,23 +83,28 @@ namespace Nonuso.Infrastructure.Notification.Services
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
         {
 
-            await _presenceRepository.GetUserPresenceAsync(model.UserId);
-            var payload = new
+            var presence = await _presenceRepository.GetUserPresenceAsync(model.UserId);
+
+            // is offline --> send push notification
+            if (!presence.HasValue)
             {
-                app_id = _appId,
-                include_aliases = new { external_id = new string[] { model.UserId.ToString() } },
-                headings = new { en = model.UserName },
-                contents = new { en = model.Content },
-                target_channel = "push",
-                ios_badgeType = "Increase", // Only for iOS
-                ios_badgeCount = 1
-                //data = new { requestId = model.ProductRequestId }
-            };
+                var payload = new
+                {
+                    app_id = _appId,
+                    include_aliases = new { external_id = new string[] { model.UserId.ToString() } },
+                    headings = new { en = model.UserName },
+                    contents = new { en = model.Content },
+                    target_channel = "push",
+                    ios_badgeType = "Increase", // Only for iOS
+                    ios_badgeCount = 1
+                    //data = new { requestId = model.ProductRequestId }
+                };
 
-            var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
-            var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
+                var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
+                var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);    
+                _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
+            }
         }
     }
 }

@@ -9,15 +9,12 @@ namespace Nonuso.Infrastructure.Redis.Repos
         private readonly IDatabase _dbRedis = redis.GetDatabase();
         private readonly ILogger<PresenceRepository> _logger = logger; 
 
-        public async Task GetUserPresenceAsync(Guid userId)
+        public async Task<(bool isOnline, string currentPage)?> GetUserPresenceAsync(Guid userId)
         {
             var userPresence = await _dbRedis.HashGetAllAsync(key: userId.ToString());
 
-            if (userPresence?.Length > 0)
-            {
-                _logger.LogInformation("FROM REDIS PRESENCE [0]: {Value}", userPresence[0]);
-                _logger.LogInformation("FROM REDIS PRESENCE [1]: {Value}", userPresence[1]);
-            }
+                return userPresence?.Length > 0 ? (true, userPresence[1].ToString())
+                    : null;         
         }
 
         public async Task SetUserOfflineAsync(Guid userId)
