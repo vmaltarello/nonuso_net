@@ -11,11 +11,15 @@ namespace Nonuso.Application.Services
     internal class ChatService(
         IMapper mapper,
         IChatRepository chatRepository,
-        INotificationService notificationService) : IChatService
+        INotificationService notificationService,
+        IConversationRepository conversationRepository,
+        IPresenceRepository presenceRepository) : IChatService
     {
         readonly IMapper _mapper = mapper;
         readonly IChatRepository _chatRepository = chatRepository;
+        readonly IConversationRepository _conversationRepository = conversationRepository;
         readonly INotificationService _notificationService = notificationService;
+        readonly IPresenceRepository _presenceRepository = presenceRepository;
 
         public async Task<MessageResultModel> CreateAsync(MessageParamModel model)
         {
@@ -29,12 +33,31 @@ namespace Nonuso.Application.Services
 
             if (otherUser != null)
             {
-                await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
+                var presence = await _presenceRepository.GetUserPresenceAsync(otherUser.Id);
+
+                // is offline --> send push notification
+                if (!presence.HasValue)
                 {
-                    UserId = otherUser.Id,
-                    Content = model.Content,
-                    UserName = otherUser.UserName!                    
-                });
+                    await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
+                    {
+                        UserId = otherUser.Id,
+                        Content = model.Content,
+                        UserName = otherUser.UserName!
+                    });
+
+                    var conversation = await _conversationRepository.GetByIdAsync(model.ConversationId)
+                        ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
+
+                    foreach (var info in conversation.ConversationsInfo)
+                    {
+                        if (info.UserId == otherUser.Id)
+                        {
+                            info.UnreadCount += 1;
+                        }
+                    }
+
+                    await _conversationRepository.UpdateAsync(conversation);
+                }            
             }
 
             return _mapper.Map<MessageResultModel>(result);

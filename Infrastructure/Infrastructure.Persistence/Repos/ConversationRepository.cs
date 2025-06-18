@@ -9,6 +9,19 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
+        public async Task<Conversation?> GetByIdAsync(Guid id)
+        {
+            return await _context.Conversation
+                .Include(x => x.ConversationsInfo)
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task UpdateAsync(Conversation entity)
+        {
+            _context.Conversation.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task CreateAsync(Conversation entity)
         {
             _context.Conversation.Add(entity);

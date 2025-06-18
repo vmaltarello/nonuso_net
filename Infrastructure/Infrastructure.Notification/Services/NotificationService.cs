@@ -16,13 +16,11 @@ namespace Nonuso.Infrastructure.Notification.Services
         readonly IConfiguration _configuration;
         readonly string _appId;
         readonly string _oneSignalApiURL = "https://onesignal.com/api/v1/notifications";
-        readonly IPresenceRepository _presenceRepository;
         readonly (string RestApiKey, string AppId) _oneSignalSettings;
 
         public NotificationService(HttpClient httpClient,
             ISecretManager secretManager,
-            IConfiguration configuration,
-            IPresenceRepository presenceRepository)
+            IConfiguration configuration)
         {
             _httpClient = httpClient;
             _configuration = configuration;
@@ -33,7 +31,6 @@ namespace Nonuso.Infrastructure.Notification.Services
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _oneSignalSettings.RestApiKey);
             _appId = _oneSignalSettings.AppId;
-            _presenceRepository = presenceRepository;
         }
 
         public async Task SendConfirmEmailAsync(User user, string link)
@@ -82,29 +79,22 @@ namespace Nonuso.Infrastructure.Notification.Services
 
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
         {
-
-            var presence = await _presenceRepository.GetUserPresenceAsync(model.UserId);
-
-            // is offline --> send push notification
-            if (!presence.HasValue)
+            var payload = new
             {
-                var payload = new
-                {
-                    app_id = _appId,
-                    include_aliases = new { external_id = new string[] { model.UserId.ToString() } },
-                    headings = new { en = model.UserName },
-                    contents = new { en = model.Content },
-                    target_channel = "push",
-                    ios_badgeType = "Increase", // Only for iOS
-                    ios_badgeCount = 1
-                    //data = new { requestId = model.ProductRequestId }
-                };
+                app_id = _appId,
+                include_aliases = new { external_id = new string[] { model.UserId.ToString() } },
+                headings = new { en = model.UserName },
+                contents = new { en = model.Content },
+                target_channel = "push",
+                ios_badgeType = "Increase", // Only for iOS
+                ios_badgeCount = 1
+                //data = new { requestId = model.ProductRequestId }
+            };
 
-                var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
-                var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
+            var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
 
-                _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
-            }
+            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
         }
     }
 }
