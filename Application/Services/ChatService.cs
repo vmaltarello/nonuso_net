@@ -48,6 +48,9 @@ namespace Nonuso.Application.Services
             {
                 var presence = await _presenceRepository.GetUserPresenceAsync(otherUser.Id);
 
+                var conversation = await _conversationRepository.GetByIdAsync(model.ConversationId, otherUser.Id)
+                      ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
+
                 // is offline --> send push notification
                 if (!presence.HasValue)
                 {
@@ -57,17 +60,22 @@ namespace Nonuso.Application.Services
                         Content = model.Content,
                         UserName = otherUser.UserName!
                     });
-
-                    var conversation = await _conversationRepository.GetByIdAsync(model.ConversationId, otherUser.Id)
-                        ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
-
+                    
                     foreach (var info in conversation.ConversationsInfo)
                     {
                         info.UnreadCount += 1;
+                        info.Visible = true;
                     }
-
-                    await _conversationRepository.UpdateAsync(conversation);
                 }
+
+                foreach (var info in conversation.ConversationsInfo)
+                {
+                    info.UnreadCount = 0;
+                    info.Visible = true;
+                }
+
+                await _conversationRepository.UpdateAsync(conversation);
+
             }
 
             return _mapper.Map<MessageResultModel>(result);
