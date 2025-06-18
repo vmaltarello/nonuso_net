@@ -9,10 +9,10 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
-        public async Task<Conversation?> GetByIdAsync(Guid id)
+        public async Task<Conversation?> GetByIdAsync(Guid id, Guid? userId = null)
         {
             return await _context.Conversation
-                .Include(x => x.ConversationsInfo)
+                .Include(x => x.ConversationsInfo.Where(y => userId == null || y.UserId == userId))
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 

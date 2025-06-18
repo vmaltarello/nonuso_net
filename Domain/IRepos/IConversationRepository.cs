@@ -8,7 +8,7 @@ namespace Nonuso.Domain.IRepos
         Task CreateAsync(Conversation entity);
         Task<IEnumerable<ConversationModel>> GetAllAsync(Guid userId);
         Task<ConversationModel?> GetActiveAsync(Guid productId, Guid userId);
-        Task<Conversation?> GetByIdAsync(Guid id);
+        Task<Conversation?> GetByIdAsync(Guid id, Guid? userId = null);
         Task UpdateAsync(Conversation entity);
     }
 }

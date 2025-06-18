@@ -21,6 +21,19 @@ namespace Nonuso.Application.Services
         readonly INotificationService _notificationService = notificationService;
         readonly IPresenceRepository _presenceRepository = presenceRepository;
 
+        public async Task SetAllReaded(Guid conversationId, Guid userId)
+        {
+            var conversation = await _conversationRepository.GetByIdAsync(conversationId, userId)
+                ?? throw new EntityNotFoundException(nameof(Conversation), conversationId);
+
+            foreach (var item in conversation.ConversationsInfo)
+            {
+                item.UnreadCount = 0;
+            }
+
+            await _conversationRepository.UpdateAsync(conversation);
+        }
+
         public async Task<MessageResultModel> CreateAsync(MessageParamModel model)
         {
             var entity = model.To<Message>();
@@ -45,19 +58,16 @@ namespace Nonuso.Application.Services
                         UserName = otherUser.UserName!
                     });
 
-                    var conversation = await _conversationRepository.GetByIdAsync(model.ConversationId)
+                    var conversation = await _conversationRepository.GetByIdAsync(model.ConversationId, otherUser.Id)
                         ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
 
                     foreach (var info in conversation.ConversationsInfo)
                     {
-                        if (info.UserId == otherUser.Id)
-                        {
-                            info.UnreadCount += 1;
-                        }
+                        info.UnreadCount += 1;
                     }
 
                     await _conversationRepository.UpdateAsync(conversation);
-                }            
+                }
             }
 
             return _mapper.Map<MessageResultModel>(result);

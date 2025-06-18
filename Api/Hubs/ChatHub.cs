@@ -15,6 +15,8 @@ namespace Nonuso.Api.Hubs
             if (!string.IsNullOrWhiteSpace(conversationId))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, conversationId!);
+
+                await _chatService.SetAllReaded(Guid.Parse(conversationId!), _currentUser.Id);
             }
 
             await base.OnConnectedAsync();
