@@ -25,5 +25,12 @@ namespace Nonuso.Api.Controllers
         {
             return Ok(await _conversationService.GetActiveAsync(productId, _currentUser.Id));
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            await _conversationService.DeleteAsync(id, _currentUser.Id);
+            return Ok();
+        }
     }
 }

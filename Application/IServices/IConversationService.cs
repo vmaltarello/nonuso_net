@@ -6,5 +6,6 @@ namespace Nonuso.Application.IServices
     {
         Task<IEnumerable<ConversationResultModel>> GetAllAsync(Guid userId);
         Task<ConversationResultModel?> GetActiveAsync(Guid productId, Guid userId);
+        Task DeleteAsync(Guid id, Guid userId);
     }
 }

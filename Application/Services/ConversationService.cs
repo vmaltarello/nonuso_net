@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Nonuso.Application.IServices;
+using Nonuso.Domain.Entities;
+using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
 using Nonuso.Messages.Api;
 
@@ -24,6 +26,19 @@ namespace Nonuso.Application.Services
             var result = await _conversationRepository.GetActiveAsync(productId, userId);
 
             return _mapper.Map<ConversationResultModel?>(result);
+        }
+
+        public async Task DeleteAsync(Guid id, Guid userId)
+        {
+            var entity = await _conversationRepository.GetByIdAsync(id, userId)
+                ?? throw new EntityNotFoundException(nameof(Conversation), id);
+
+            foreach (var info in entity.ConversationsInfo)
+            {
+                info.Visible = false;
+            }
+
+            await _conversationRepository.UpdateAsync(entity);
         }
     }
 }
