@@ -8,6 +8,7 @@ namespace Nonuso.Domain.Models
         public required string LastMessage { get; set; }
         public DateTime LastMessageDate { get; set; }
         public IEnumerable<MessageModel> Messages { get; set; } = [];
+        public int UnReadedCount { get; set; } = 0;
         public required ProductRequest ProductRequest { get; set; }
         public required User ChatWithUser { get; set; }
         public DateTime CreatedAt { get; set; }

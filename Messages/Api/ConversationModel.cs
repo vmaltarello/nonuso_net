@@ -32,6 +32,7 @@ namespace Nonuso.Messages.Api
         public required string LastMessage { get; set; }
         public DateTime LastMessageDate { get; set; }
         public IEnumerable<MessageResultModel> Messages { get; set; } = [];
+        public int UnReadedCount { get; set; } = 0;
         public required ProductRequestModel ProductRequest { get; set; }
         public required UserModel ChatWithUser { get; set; }
         public DateTime CreatedAt { get; set; }

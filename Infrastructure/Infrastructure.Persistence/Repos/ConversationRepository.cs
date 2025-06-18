@@ -71,6 +71,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     CreatedAt = x.CreatedAt,
                     LastMessage = x.Messages.OrderByDescending(x => x.CreatedAt).First().Content ?? string.Empty,
                     LastMessageDate = x.Messages.OrderByDescending(x => x.CreatedAt).First().CreatedAt,
+                    UnReadedCount = x.ConversationsInfo.Where(x => x.UserId == userId).First().UnreadCount,
                     Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
                     {
                         Id = x.Id,
