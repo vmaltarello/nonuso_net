@@ -61,12 +61,13 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         {
             return await _context.Conversation
                 .Where(x => x.ProductRequest != null &&
-                            (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId))
+                            (x.ProductRequest.RequestedId == userId || x.ProductRequest.RequesterId == userId)
+                            && x.ConversationsInfo.Any(x => x.Visible && x.UserId == userId))
                 .Include(x => x.ProductRequest).ThenInclude(x => x!.Product).ThenInclude(x => x!.User)
                 .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new ConversationModel()
                 {
-                    Id = x.Id,
+                    Id = x.Id,                    
                     ProductRequest = x.ProductRequest!,
                     CreatedAt = x.CreatedAt,
                     LastMessage = x.Messages.OrderByDescending(x => x.CreatedAt).First().Content ?? string.Empty,
@@ -82,6 +83,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     }),
                     ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
                 })
+                
                 .ToListAsync();       
         }
     }
