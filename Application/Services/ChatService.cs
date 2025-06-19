@@ -58,7 +58,8 @@ namespace Nonuso.Application.Services
                     {
                         UserId = otherUser.Id,
                         Content = model.Content,
-                        UserName = otherUser.UserName!
+                        UserName = otherUser.UserName!,
+                        ConversationId = model.ConversationId,
                     });
                     
                     foreach (var info in conversation.ConversationsInfo)
