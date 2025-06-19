@@ -12,7 +12,7 @@ namespace Nonuso.Messages.Api
     public class MessageResultModel
     {
         public Guid Id { get; set; }
-        public bool IsMine { get; set; } = false;
+        public required Guid SenderId { get; set; }
         public required string Content { get; set; }
         public bool IsAttachment { get; set; } = false;
         public DateTime CreatedAt { get; set; }

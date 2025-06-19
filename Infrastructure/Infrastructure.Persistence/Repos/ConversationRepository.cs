@@ -47,7 +47,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                    Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
                    {
                        Id = x.Id,
-                       IsMine = x.SenderId == userId,
+                       SenderId = x.SenderId,
                        Content = x.Content ?? string.Empty,
                        IsAttachment = x.IsAttachment,
                        CreatedAt = x.CreatedAt
@@ -76,7 +76,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
                     {
                         Id = x.Id,
-                        IsMine = x.SenderId == userId,
+                        SenderId = x.SenderId,
                         Content = x.Content ?? string.Empty,
                         IsAttachment = x.IsAttachment,
                         CreatedAt = x.CreatedAt

@@ -25,7 +25,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 ).FirstOrDefaultAsync();
         }
 
-        public async Task<MessageModel?> GetMessageById(Guid id, Guid userId)
+        public async Task<MessageModel?> GetMessageById(Guid id)
         {
             return await _context.Message.Select(x => new MessageModel() 
             {
@@ -33,7 +33,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 Content = x.Content ?? string.Empty,
                 IsAttachment = x.IsAttachment,
                 CreatedAt = x.CreatedAt,
-                IsMine = x.SenderId == userId
+                SenderId = x.SenderId
             }).FirstOrDefaultAsync(x => x.Id == id);
         }
 
@@ -51,7 +51,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
                     {
                         Id = x.Id,
-                        IsMine = x.SenderId == userId,
+                        SenderId = x.SenderId,
                         Content = x.Content ?? string.Empty,
                         IsAttachment = x.IsAttachment,
                         CreatedAt = x.CreatedAt

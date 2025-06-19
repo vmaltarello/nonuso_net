@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using Nonuso.Application.IServices;
 using Nonuso.Domain.Entities;
-using Nonuso.Domain.IRepos;
 using Nonuso.Infrastructure.Secret;
 using Nonuso.Messages.Api;
 using System.Net.Http.Headers;
@@ -79,7 +78,6 @@ namespace Nonuso.Infrastructure.Notification.Services
 
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
         {
-            try { 
             var payload = new
             {
                 app_id = _appId,
@@ -89,29 +87,13 @@ namespace Nonuso.Infrastructure.Notification.Services
                 target_channel = "push",
                 ios_badgeType = "Increase", // Only for iOS
                 ios_badgeCount = 1,
-                app_url = $"nonuso.app://chat",
-                data = new { message = model.Message, conversationId = model.ConversationId }
+                data = new { conversationId = model.ConversationId }
             };
 
             var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
             var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine($"OneSignal Response: {response.StatusCode} - {responseContent}");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"OneSignal failed: {response.StatusCode} - {responseContent}");
-            }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception in SendPushNotificationAsync: {ex.Message}");
-            }
+            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
         }
     }
 }

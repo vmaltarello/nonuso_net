@@ -40,7 +40,7 @@ namespace Nonuso.Application.Services
 
             await _chatRepository.CreateAsync(entity);
 
-            var result = await _chatRepository.GetMessageById(entity.Id, model.SenderId);
+            var result = await _chatRepository.GetMessageById(entity.Id);
 
             var otherUser = await _chatRepository.GetChatWithUserByConversationIdAsync(model.ConversationId, model.SenderId);
 
@@ -65,7 +65,6 @@ namespace Nonuso.Application.Services
                         UserId = otherUser.Id,
                         Content = model.Content,
                         UserName = otherUser.UserName!,
-                        Message = _mapper.Map<MessageResultModel>(result),
                         ConversationId = model.ConversationId
                     });          
                 }

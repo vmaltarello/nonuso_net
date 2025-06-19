@@ -7,7 +7,7 @@ namespace Nonuso.Domain.IRepos
     {
         Task CreateAsync(Message entity);
         Task<User?> GetChatWithUserByConversationIdAsync(Guid id, Guid userId);
-        Task<MessageModel?> GetMessageById(Guid id, Guid userId);
+        Task<MessageModel?> GetMessageById(Guid id);
         Task<ChatModel?> GetByConversationIdAsync(Guid id, Guid userId);
     }
 }
