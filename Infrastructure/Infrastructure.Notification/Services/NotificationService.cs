@@ -79,6 +79,7 @@ namespace Nonuso.Infrastructure.Notification.Services
 
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
         {
+            try { 
             var payload = new
             {
                 app_id = _appId,
@@ -95,7 +96,22 @@ namespace Nonuso.Infrastructure.Notification.Services
             var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
             var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
+            var response = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"OneSignal Response: {response.StatusCode} - {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"OneSignal failed: {response.StatusCode} - {responseContent}");
+            }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in SendPushNotificationAsync: {ex.Message}");
+            }
         }
     }
 }
