@@ -5,6 +5,7 @@
         public required Guid UserId { get; set; }
         public required string UserName { get; set; }
         public required string Content { get; set; }
-        public required ConversationResultModel Conversation { get; set; }
+        public required MessageResultModel Message { get; set; }
+        public required Guid ConversationId { get; set; }
     }
 }

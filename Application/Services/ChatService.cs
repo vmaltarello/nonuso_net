@@ -60,14 +60,13 @@ namespace Nonuso.Application.Services
                         info.Visible = true;
                     }
 
-                    var conversationModel = await _conversationRepository.GetModelByIdAsync(model.ConversationId, otherUser.Id);
-
                     await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
                     {
                         UserId = otherUser.Id,
                         Content = model.Content,
                         UserName = otherUser.UserName!,
-                        Conversation = _mapper.Map<ConversationResultModel>(conversationModel),
+                        Message = _mapper.Map<MessageResultModel>(result),
+                        ConversationId = model.ConversationId
                     });          
                 }
 

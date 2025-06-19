@@ -9,7 +9,6 @@ namespace Nonuso.Domain.IRepos
         Task<IEnumerable<ConversationModel>> GetAllAsync(Guid userId);
         Task<ConversationModel?> GetActiveAsync(Guid productId, Guid userId);
         Task<Conversation?> GetByIdAsync(Guid id, Guid? userId);
-        Task<ConversationModel?> GetModelByIdAsync(Guid id, Guid userId);
         Task UpdateAsync(Conversation entity);
     }
 }
