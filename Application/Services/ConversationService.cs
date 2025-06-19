@@ -14,6 +14,14 @@ namespace Nonuso.Application.Services
         readonly IMapper _mapper = mapper;
         readonly IConversationRepository _conversationRepository = conversationRepository;
 
+        public async Task<ConversationResultModel> GetByIdAsync(Guid id, Guid userId)
+        {
+            var result = await _conversationRepository.GetByIdAsync(id, userId)
+                ?? throw new EntityNotFoundException(nameof(Conversation), id);
+
+            return _mapper.Map<ConversationResultModel>(result);
+        }
+
         public async Task<IEnumerable<ConversationResultModel>> GetAllAsync(Guid userId)
         {
             var result = await _conversationRepository.GetAllAsync(userId);
@@ -30,7 +38,7 @@ namespace Nonuso.Application.Services
 
         public async Task DeleteAsync(Guid id, Guid userId)
         {
-            var entity = await _conversationRepository.GetByIdAsync(id, userId)
+            var entity = await _conversationRepository.GetEntityByIdAsync(id, userId)
                 ?? throw new EntityNotFoundException(nameof(Conversation), id);
 
             foreach (var info in entity.ConversationsInfo)

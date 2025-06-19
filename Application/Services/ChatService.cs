@@ -23,7 +23,7 @@ namespace Nonuso.Application.Services
 
         public async Task SetAllReaded(Guid conversationId, Guid userId)
         {
-            var conversation = await _conversationRepository.GetByIdAsync(conversationId, userId)
+            var conversation = await _conversationRepository.GetEntityByIdAsync(conversationId, userId)
                 ?? throw new EntityNotFoundException(nameof(Conversation), conversationId);
 
             foreach (var item in conversation.ConversationsInfo)
@@ -48,7 +48,7 @@ namespace Nonuso.Application.Services
             {
                 var presence = await _presenceRepository.GetUserPresenceAsync(otherUser.Id);
 
-                var conversation = await _conversationRepository.GetByIdAsync(model.ConversationId, otherUser.Id)
+                var conversation = await _conversationRepository.GetEntityByIdAsync(model.ConversationId, otherUser.Id)
                       ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
 
                 // is offline --> send push notification

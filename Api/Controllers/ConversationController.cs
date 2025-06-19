@@ -14,6 +14,12 @@ namespace Nonuso.Api.Controllers
         private readonly IConversationService _conversationService = conversationService;
         private readonly CurrentUser _currentUser = currentUser;
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            return Ok(await _conversationService.GetByIdAsync(id, _currentUser.Id));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {            
