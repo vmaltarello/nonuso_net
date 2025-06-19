@@ -54,19 +54,21 @@ namespace Nonuso.Application.Services
                 // is offline --> send push notification
                 if (!presence.HasValue)
                 {
-                    await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
-                    {
-                        UserId = otherUser.Id,
-                        Content = model.Content,
-                        UserName = otherUser.UserName!,
-                        ConversationId = model.ConversationId,
-                    });
-                    
                     foreach (var info in conversation.ConversationsInfo)
                     {
                         info.UnreadCount += 1;
                         info.Visible = true;
                     }
+
+                    var conversationModel = await _conversationRepository.GetModelByIdAsync(model.ConversationId);
+
+                    await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
+                    {
+                        UserId = otherUser.Id,
+                        Content = model.Content,
+                        UserName = otherUser.UserName!,
+                        Conversation = _mapper.Map<ConversationResultModel>(conversationModel),
+                    });          
                 }
 
                 foreach (var info in conversation.ConversationsInfo)

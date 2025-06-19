@@ -88,7 +88,8 @@ namespace Nonuso.Infrastructure.Notification.Services
                 target_channel = "push",
                 ios_badgeType = "Increase", // Only for iOS
                 ios_badgeCount = 1,
-                app_url = $"nonuso.app://chat?conversationId={model.ConversationId}"
+                app_url = $"nonuso.app://chat",
+                data = model.Conversation
             };
 
             var json = JsonConvert.SerializeObject(payload, Formatting.Indented);

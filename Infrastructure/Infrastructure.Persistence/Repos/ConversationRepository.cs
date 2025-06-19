@@ -9,11 +9,38 @@ namespace Nonuso.Infrastructure.Persistence.Repos
     {
         private readonly NonusoDbContext _context = context;
 
-        public async Task<Conversation?> GetByIdAsync(Guid id, Guid? userId = null)
+        public async Task<Conversation?> GetByIdAsync(Guid id, Guid? userId)
         {
             return await _context.Conversation
                 .Include(x => x.ConversationsInfo.Where(y => userId == null || y.UserId == userId))
                 .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<ConversationModel?> GetModelByIdAsync(Guid id, Guid? userId = null)
+        {
+            return await _context.Conversation
+                .Include(x => x.ConversationsInfo.Where(y => userId == null || y.UserId == userId))
+               .Include(x => x.ProductRequest).ThenInclude(x => x!.Product).ThenInclude(x => x!.User)
+               .OrderByDescending(x => x.CreatedAt)
+               .Select(x => new ConversationModel()
+               {
+                   Id = x.Id,
+                   ProductRequest = x.ProductRequest!,
+                   CreatedAt = x.CreatedAt,
+                   LastMessage = x.Messages.OrderByDescending(x => x.CreatedAt).First().Content ?? string.Empty,
+                   LastMessageDate = x.Messages.OrderByDescending(x => x.CreatedAt).First().CreatedAt,
+                   UnReadedCount = x.ConversationsInfo.Where(x => x.UserId == userId).First().UnreadCount,
+                   Messages = x.Messages.OrderBy(x => x.CreatedAt).Select(x => new MessageModel()
+                   {
+                       Id = x.Id,
+                       IsMine = x.SenderId == userId,
+                       Content = x.Content ?? string.Empty,
+                       IsAttachment = x.IsAttachment,
+                       CreatedAt = x.CreatedAt
+                   }),
+                   ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
+               })
+               .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task UpdateAsync(Conversation entity)
@@ -82,8 +109,7 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                         CreatedAt = x.CreatedAt
                     }),
                     ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
-                })
-                
+                })                
                 .ToListAsync();       
         }
     }
