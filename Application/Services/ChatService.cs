@@ -60,7 +60,7 @@ namespace Nonuso.Application.Services
                         info.Visible = true;
                     }
 
-                    var conversationModel = await _conversationRepository.GetModelByIdAsync(model.ConversationId);
+                    var conversationModel = await _conversationRepository.GetModelByIdAsync(model.ConversationId, otherUser.Id);
 
                     await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
                     {

@@ -16,10 +16,10 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<ConversationModel?> GetModelByIdAsync(Guid id, Guid? userId = null)
+        public async Task<ConversationModel?> GetModelByIdAsync(Guid id, Guid userId)
         {
             return await _context.Conversation
-                .Include(x => x.ConversationsInfo.Where(y => userId == null || y.UserId == userId))
+               .Include(x => x.ConversationsInfo.Where(y => y.UserId == userId))
                .Include(x => x.ProductRequest).ThenInclude(x => x!.Product).ThenInclude(x => x!.User)
                .OrderByDescending(x => x.CreatedAt)
                .Select(x => new ConversationModel()
