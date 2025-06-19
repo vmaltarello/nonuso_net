@@ -89,7 +89,7 @@ namespace Nonuso.Infrastructure.Notification.Services
                 ios_badgeType = "Increase", // Only for iOS
                 ios_badgeCount = 1,
                 app_url = $"nonuso.app://chat",
-                data = model.Conversation
+                data = new { conversation = model.Conversation }
             };
 
             var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
