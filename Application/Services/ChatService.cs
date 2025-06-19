@@ -52,7 +52,7 @@ namespace Nonuso.Application.Services
                       ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
 
                 // is offline --> send push notification
-                if (!presence.HasValue)
+                if (!presence.HasValue || !presence.Value.currentPage.Contains(model.ConversationId.ToString()))
                 {
                     foreach (var info in conversation.ConversationsInfo)
                     {
