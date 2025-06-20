@@ -22,6 +22,7 @@ COPY ["Infrastructure/Infrastructure.Persistence/Nonuso.Infrastructure.Persisten
 COPY ["Infrastructure/Infrastructure.Storage/Nonuso.Infrastructure.Storage.csproj", "Infrastructure/Infrastructure.Storage/"]
 COPY ["Infrastructure/Infrastructure.Notification/Nonuso.Infrastructure.Notification.csproj", "Infrastructure/Infrastructure.Notification/"]
 COPY ["Infrastructure/Infrastructure.Redis/Nonuso.Infrastructure.Redis.csproj", "Infrastructure/Infrastructure.Redis/"]
+COPY ["Infrastructure/Infrastructure.Logger/Nonuso.Infrastructure.Logger.csproj", "Infrastructure/Infrastructure.Logger/"]
 
 RUN dotnet restore "Api/Nonuso.Api.csproj"
 

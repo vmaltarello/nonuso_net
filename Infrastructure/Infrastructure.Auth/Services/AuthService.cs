@@ -147,11 +147,6 @@ namespace Nonuso.Infrastructure.Auth.Services
                 ?? throw new EntityNotFoundException(nameof(User), id);
 
             await _authRepository.DeleteAsync(user);
-
-            var refreshToken = await _authRepository.GetRefreshTokenByUserIdAsync(id);
-
-            if (refreshToken != null)
-                await _authRepository.RevokeRefreshTokenAsync(refreshToken);
         }
 
         public async Task ChangePasswordAsync(string password, Guid userId)
@@ -214,7 +209,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
 
-            if (user != null && user.EmailConfirmed && user.IsEnabled && !user.LockoutEnabled)
+            if (user != null && user.EmailConfirmed && user.IsEnabled)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var encodedToken = WebUtility.UrlEncode(token);
