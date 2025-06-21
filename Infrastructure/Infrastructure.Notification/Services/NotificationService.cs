@@ -87,7 +87,7 @@ namespace Nonuso.Infrastructure.Notification.Services
                 target_channel = "push",
                 ios_badgeType = "Increase", // Only for iOS
                 ios_badgeCount = 1,
-                data = new { conversationId = model.ConversationId }
+                data = new { conversationId = model.ConversationId, type = "message" }
             };
 
             var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
