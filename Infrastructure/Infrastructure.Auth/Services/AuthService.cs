@@ -49,6 +49,14 @@ namespace Nonuso.Infrastructure.Auth.Services
             return user.To<UserResultModel>();
         }
 
+        public async Task<UserProfileResultModel> GetUserProfileAsync(Guid id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString())
+               ?? throw new EntityNotFoundException(nameof(User), id);
+
+            return user.To<UserProfileResultModel>();
+        }
+
         public async Task<UserResultModel> AuthWithGoogleAsync(string idToken)
         {
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);

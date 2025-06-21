@@ -5,6 +5,7 @@ namespace Nonuso.Application.IServices
     public interface IAuthService
     {
         Task<UserResultModel> GetCurrentUserAsync(Guid id);
+        Task<UserProfileResultModel> GetUserProfileAsync(Guid id);
         Task<UserResultModel> AuthWithGoogleAsync(string idToken);
         Task SignUpAsync(UserSignUpParamModel model);
         Task<UserResultModel> SignInAsync(UserSignInParamModel model);

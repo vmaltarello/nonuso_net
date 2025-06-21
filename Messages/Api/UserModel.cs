@@ -34,4 +34,9 @@ namespace Nonuso.Messages.Api
         public required string RefreshToken { get; set; }
         public int RefreshTokenExpiresIn { get; set; }
     }
+
+    public class UserProfileResultModel
+    {
+        public required string UserName { get; set; }
+    }
 }

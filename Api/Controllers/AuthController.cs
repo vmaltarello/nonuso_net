@@ -21,6 +21,13 @@ namespace Nonuso.Api.Controllers
             return Ok(await _authService.GetCurrentUserAsync(_currentUser.Id));
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetUserProfile()
+        {
+            return Ok(await _authService.GetUserProfileAsync(_currentUser.Id));
+        }
+
         [HttpPost]
         public async Task<IActionResult> AuthWithGoogle(AuthGoogleParamModel model)
         {
