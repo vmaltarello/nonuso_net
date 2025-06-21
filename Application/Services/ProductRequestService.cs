@@ -12,12 +12,16 @@ namespace Nonuso.Application.Services
         IMapper mapper,
         IProductRepository productRepository,
         IProductRequestRepository productRequestRepository,
-        IConversationRepository conversationRepository) : IProductRequestService
+        IConversationRepository conversationRepository,
+        IChatRepository chatRepository,
+        INotificationService notificationService) : IProductRequestService
     {
         readonly IMapper _mapper = mapper;
         readonly IProductRepository _productRepository = productRepository;
         readonly IProductRequestRepository _productRequestRepository = productRequestRepository;
         readonly IConversationRepository _conversationRepository = conversationRepository;
+        readonly INotificationService _notificationService = notificationService;
+        readonly IChatRepository _chatRepository = chatRepository;
 
 
         public async Task CreateAsync(ProductRequestParamModel model)
@@ -54,6 +58,19 @@ namespace Nonuso.Application.Services
 
             await _productRequestRepository.CreateAsync(productRequest);
             await _conversationRepository.CreateAsync(conversation);
+
+            var otherUser = await _chatRepository.GetChatWithUserByConversationIdAsync(conversation.Id, productRequest.RequesterId);
+
+            if (otherUser != null)
+            {
+                await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
+                {
+                    ConversationId = conversation.Id,
+                    UserId = otherUser.Id,
+                    UserName = otherUser.UserName!,
+                    Content = model.Message
+                });
+            }
         }
     }
 }

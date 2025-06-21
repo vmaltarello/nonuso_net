@@ -12,14 +12,12 @@ namespace Nonuso.Application.Services
         IMapper mapper,
         IChatRepository chatRepository,
         INotificationService notificationService,
-        IConversationRepository conversationRepository,
-        IPresenceRepository presenceRepository) : IChatService
+        IConversationRepository conversationRepository) : IChatService
     {
         readonly IMapper _mapper = mapper;
         readonly IChatRepository _chatRepository = chatRepository;
         readonly IConversationRepository _conversationRepository = conversationRepository;
         readonly INotificationService _notificationService = notificationService;
-        readonly IPresenceRepository _presenceRepository = presenceRepository;
 
         public async Task SetAllReaded(Guid conversationId, Guid userId)
         {
@@ -46,37 +44,13 @@ namespace Nonuso.Application.Services
 
             if (otherUser != null)
             {
-                var presence = await _presenceRepository.GetUserPresenceAsync(otherUser.Id);
-
-                var conversation = await _conversationRepository.GetEntityByIdAsync(model.ConversationId, otherUser.Id)
-                      ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
-
-                // is offline --> send push notification
-                if (!presence.HasValue || !presence.Value.currentPage.Contains(model.ConversationId.ToString()))
+                await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
                 {
-                    foreach (var info in conversation.ConversationsInfo)
-                    {
-                        info.UnreadCount += 1;
-                        info.Visible = true;
-                    }
-
-                    await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
-                    {
-                        UserId = otherUser.Id,
-                        Content = model.Content,
-                        UserName = otherUser.UserName!,
-                        ConversationId = model.ConversationId
-                    });          
-                }
-
-                foreach (var info in conversation.ConversationsInfo)
-                {
-                    info.UnreadCount = 0;
-                    info.Visible = true;
-                }
-
-                await _conversationRepository.UpdateAsync(conversation);
-
+                    UserId = otherUser.Id,
+                    Content = model.Content,
+                    UserName = otherUser.UserName!,
+                    ConversationId = model.ConversationId
+                });
             }
 
             return _mapper.Map<MessageResultModel>(result);
