@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -23,6 +24,7 @@ using System.Text;
 namespace Nonuso.Infrastructure.Auth.Services
 {
     public class AuthService(
+        IMapper mapper,
         ILogger<AuthService> logger,
         IDomainValidatorFactory validatorFactory,
         UserManager<User> userManager,
@@ -32,6 +34,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         IConfiguration configuration,
         ISecretManager secretManager) : IAuthService
     {
+        readonly IMapper _mapper = mapper;
         readonly ILogger<AuthService> _logger = logger;
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly UserManager<User> _userManager = userManager;
@@ -55,9 +58,17 @@ namespace Nonuso.Infrastructure.Auth.Services
             var user = await _userManager.FindByIdAsync(id.ToString())
                ?? throw new EntityNotFoundException(nameof(User), id);
 
+            var profileInfo = await _authRepository.GetUserProfileAsync(user.Id);
+
             user.UserName = char.ToUpper(user.UserName![0]) + user.UserName[1..];
-            
-            return user.To<UserProfileResultModel>();
+
+            var result = new UserProfileResultModel() 
+            {
+                UserName = char.ToUpper(user.UserName![0]) + user.UserName[1..],
+                Reviews = _mapper.Map<ReviewResultModel[]>(profileInfo.Reviews)
+            };
+
+            return result;
         }
 
         public async Task<UserResultModel> AuthWithGoogleAsync(string idToken)

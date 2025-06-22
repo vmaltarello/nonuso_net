@@ -1,12 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nonuso.Domain.Entities;
 using Nonuso.Domain.IRepos;
+using Nonuso.Domain.Models;
 
 namespace Nonuso.Infrastructure.Persistence.Repos
 {
     internal class AuthRepository(NonusoDbContext context) : IAuthRepository
     {
         private readonly NonusoDbContext _context = context;
+
+        public async Task<UserProfileModel> GetUserProfileAsync(Guid id)
+        {
+            var reviews = await _context.Review.Where(x => x.ReviewedUserId == id).ToListAsync();
+
+            return new UserProfileModel() { Reviews = reviews };
+        }
 
         public async Task<RefreshToken?> GetRefreshTokenByUserIdAsync(Guid id, string? refreshToken = null)
         {

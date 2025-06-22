@@ -38,5 +38,6 @@ namespace Nonuso.Messages.Api
     public class UserProfileResultModel
     {
         public required string UserName { get; set; }
+        public IEnumerable<ReviewResultModel> Reviews { get; set; } = [];
     }
 }

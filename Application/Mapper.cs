@@ -40,6 +40,7 @@ namespace Nonuso.Application
             CreateMap<Favorite, FavoriteResultModel>().ReverseMap();
 
             CreateMap<ReviewParamModel, Review>();
+            CreateMap<ReviewResultModel, Review>().ReverseMap();
         }
     }
 }
