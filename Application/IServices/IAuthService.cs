@@ -11,7 +11,7 @@ namespace Nonuso.Application.IServices
         Task<UserResultModel> SignInAsync(UserSignInParamModel model);
         Task SignOutAsync(Guid id);
         Task DeleteAsync(Guid id);
-        Task ChangePasswordAsync(string password, Guid userId);
+        Task ChangePasswordAsync(UserChangePasswordParamModel model, Guid userId);
         Task ChangeUserNameAsync(Guid userId, string userName);
         Task<UserResultModel> RefreshTokenAsync(RefreshTokenParamModel model);
         Task<UserResultModel?> ConfirmEmailAsync(AuthConfirmEmailParamModel model);

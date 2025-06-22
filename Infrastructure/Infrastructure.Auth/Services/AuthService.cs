@@ -60,8 +60,6 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             var profileInfo = await _authRepository.GetUserProfileAsync(user.Id);
 
-            user.UserName = char.ToUpper(user.UserName![0]) + user.UserName[1..];
-
             var result = new UserProfileResultModel() 
             {
                 UserName = char.ToUpper(user.UserName![0]) + user.UserName[1..],
@@ -171,12 +169,12 @@ namespace Nonuso.Infrastructure.Auth.Services
             await _authRepository.DeleteAsync(user);
         }
 
-        public async Task ChangePasswordAsync(string password, Guid userId)
+        public async Task ChangePasswordAsync(UserChangePasswordParamModel model, Guid userId)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString())
                 ?? throw new EntityNotFoundException(nameof(User), userId);
 
-            await _userManager.ChangePasswordAsync(user, user.PasswordHash!, password);
+            await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
         }
 
         public async Task ChangeUserNameAsync(Guid userId, string userName)
