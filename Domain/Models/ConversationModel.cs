@@ -10,8 +10,8 @@ namespace Nonuso.Domain.Models
         public IEnumerable<MessageModel> Messages { get; set; } = [];
         public int UnReadedCount { get; set; } = 0;
         public required ProductRequest ProductRequest { get; set; }
+        public bool HasReview {  get; set; }
         public required User ChatWithUser { get; set; }
-        public DateTime CreatedAt { get; set; }
-        
+        public DateTime CreatedAt { get; set; }        
     }
 }

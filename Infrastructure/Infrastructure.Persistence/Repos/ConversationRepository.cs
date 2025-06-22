@@ -40,7 +40,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                         IsAttachment = x.IsAttachment,
                         CreatedAt = x.CreatedAt
                     }),
-                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
+                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!,
+                    HasReview = _context.Review.Where(x => x.ProductRequestId == x.ProductRequestId).Any(),
                 })
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
@@ -81,7 +82,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                        IsAttachment = x.IsAttachment,
                        CreatedAt = x.CreatedAt
                    }),
-                   ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
+                   ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!,
+                   HasReview = _context.Review.Where(x => x.ProductRequestId == x.ProductRequestId).Any(),
                })
                .FirstOrDefaultAsync();
         }
@@ -110,7 +112,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                         IsAttachment = x.IsAttachment,
                         CreatedAt = x.CreatedAt
                     }),
-                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!
+                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!,
+                    HasReview = _context.Review.Where(x => x.ProductRequestId == x.ProductRequestId).Any(),
                 })                
                 .ToListAsync();       
         }

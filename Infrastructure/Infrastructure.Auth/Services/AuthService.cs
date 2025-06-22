@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Nonuso.Application.IServices;
 using Nonuso.Common;
 using Nonuso.Domain.Entities;
+using Nonuso.Domain.Entities.Base;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
 using Nonuso.Domain.Validators.Factory;
@@ -54,6 +55,8 @@ namespace Nonuso.Infrastructure.Auth.Services
             var user = await _userManager.FindByIdAsync(id.ToString())
                ?? throw new EntityNotFoundException(nameof(User), id);
 
+            user.UserName = char.ToUpper(user.UserName![0]) + user.UserName[1..];
+            
             return user.To<UserProfileResultModel>();
         }
 
