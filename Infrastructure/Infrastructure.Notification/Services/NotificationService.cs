@@ -24,7 +24,6 @@ namespace Nonuso.Infrastructure.Notification.Services
         public NotificationService(HttpClient httpClient,
             ISecretManager secretManager,
             IConfiguration configuration,
-            IChatRepository chatRepository,
             IConversationRepository conversationRepository,
             IPresenceRepository presenceRepository)
         {
@@ -33,6 +32,7 @@ namespace Nonuso.Infrastructure.Notification.Services
 
             _oneSignalSettings = secretManager.GetOneSignalSettings();
 
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _oneSignalSettings.RestApiKey);
@@ -60,7 +60,7 @@ namespace Nonuso.Infrastructure.Notification.Services
 
             var json = JsonConvert.SerializeObject(obj);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), content);
+            _ = await _httpClient.PostAsync(_oneSignalApiURL, content);
         }
 
         public async Task SendRequestResetPasswordEmailAsync(User user, string link)
@@ -82,7 +82,7 @@ namespace Nonuso.Infrastructure.Notification.Services
 
             var json = JsonConvert.SerializeObject(obj);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), content);
+            _ = await _httpClient.PostAsync(_oneSignalApiURL, content);
         }
 
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
@@ -101,6 +101,8 @@ namespace Nonuso.Infrastructure.Notification.Services
                     info.Visible = true;
                 }
 
+                await _conversationRepository.UpdateAsync(conversation);
+
                 var payload = new
                 {
                     app_id = _appId,
@@ -116,16 +118,10 @@ namespace Nonuso.Infrastructure.Notification.Services
                 var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
                 var contentToSend = new StringContent(json, Encoding.UTF8, "application/json");
 
-                _ = await _httpClient.PostAsync(new Uri(_oneSignalApiURL), contentToSend);
+                _ = await _httpClient.PostAsync(_oneSignalApiURL, contentToSend);
+
             }
 
-            foreach (var info in conversation.ConversationsInfo)
-            {
-                info.UnreadCount = 0;
-                info.Visible = true;
-            }
-
-            await _conversationRepository.UpdateAsync(conversation);
         }
     }
 }

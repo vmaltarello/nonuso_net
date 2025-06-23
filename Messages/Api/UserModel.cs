@@ -40,5 +40,6 @@ namespace Nonuso.Messages.Api
     {
         public required string UserName { get; set; }
         public IEnumerable<ReviewResultModel> Reviews { get; set; } = [];
+        public double ReviewAverage => Reviews.Any() ? Reviews.Average(x => x.Stars) : 0;
     }
 }

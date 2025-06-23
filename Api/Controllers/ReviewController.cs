@@ -7,6 +7,7 @@ using Nonuso.Messages.Api;
 
 namespace Nonuso.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]/[action]")]
     [ApiController]
     public class ReviewController(IReviewService reviewService, CurrentUser currentUser) : ApiControllerBase
@@ -14,7 +15,12 @@ namespace Nonuso.Api.Controllers
         private readonly IReviewService _reviewService = reviewService;
         private readonly CurrentUser _currentUser = currentUser;
 
-        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await _reviewService.GetAllAsync(_currentUser.Id));
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create(ReviewParamModel model)
         {

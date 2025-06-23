@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using AspNetCoreRateLimit;
+using Microsoft.OpenApi.Models;
 using Nonuso.Infrastructure.Secret;
 
 namespace Nonuso.Api.Extensions
@@ -53,6 +54,17 @@ namespace Nonuso.Api.Extensions
             });
 
             services.AddSignalR().AddStackExchangeRedis(secretManager.GetConnectionString("redis"));
+
+            return services;
+        }
+
+        public static IServiceCollection AddIpRateLimit(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddMemoryCache();
+            services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+            services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
+            services.AddInMemoryRateLimiting();
+            services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
             return services;
         }

@@ -1,4 +1,6 @@
-﻿namespace Nonuso.Api.Extensions
+﻿using AspNetCoreRateLimit;
+
+namespace Nonuso.Api.Extensions
 {
     public static class IApplicationBuilderExtensions
     {
@@ -12,6 +14,13 @@
                 options.EnableDeepLinking();
                 options.DisplayRequestDuration();
             });
+
+            return app;
+        }
+
+        public static IApplicationBuilder AddUseIpRateLimiting(this IApplicationBuilder app) 
+        {
+            app.UseIpRateLimiting();
 
             return app;
         }

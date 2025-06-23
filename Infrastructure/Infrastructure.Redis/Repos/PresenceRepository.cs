@@ -27,8 +27,7 @@ namespace Nonuso.Infrastructure.Redis.Repos
             var key = $"{userId}";
             await _dbRedis.HashSetAsync(key,
                 [
-                    new HashEntry("userId", userId.ToString()),
-                    new HashEntry("page", page)        
+                    new HashEntry("page", page)
                 ]);
 
             await _dbRedis.KeyExpireAsync(key, TimeSpan.FromMinutes(10));

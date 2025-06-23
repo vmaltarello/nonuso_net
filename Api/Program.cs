@@ -16,7 +16,6 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
@@ -27,6 +26,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddInfrastructureSecret();
+builder.Services.AddIpRateLimit(builder.Configuration);
 
 #pragma warning disable ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
 var sp = builder.Services.BuildServiceProvider();
@@ -51,6 +51,8 @@ app.MapHub<PresenceHub>("/presenceHub").RequireAuthorization();
 app.SetupSwagger();
 
 app.UseMiddleware<ApiExceptionHandler>();
+
+app.AddUseIpRateLimiting();
 
 //app.UseHttpsRedirection();
 

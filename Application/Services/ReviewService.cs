@@ -17,6 +17,13 @@ namespace Nonuso.Application.Services
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly IReviewRepository _reviewRepository= reviewRepository;
 
+        public async Task<IEnumerable<ReviewResultModel>> GetAllAsync(Guid userId)
+        {
+            var result = await _reviewRepository.GetAllAsync(userId);
+
+            return _mapper.Map<ReviewResultModel[]>(result);
+        }
+
         public async Task CreateAsync(ReviewParamModel model)
         {
             var entity = _mapper.Map<Review>(model);
