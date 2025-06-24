@@ -63,7 +63,10 @@ namespace Nonuso.Infrastructure.Auth.Services
             var result = new UserProfileResultModel() 
             {
                 UserName = char.ToUpper(user.UserName![0]) + user.UserName[1..],
-                Reviews = _mapper.Map<ReviewResultModel[]>(profileInfo.Reviews)
+                Reviews = _mapper.Map<ReviewResultModel[]>(profileInfo.Reviews),
+                JoinedMonth = profileInfo.JoinedMonth,
+                JoinedYear = profileInfo.JoinedYear,
+                ProductCount = profileInfo.ProductCount
             };
 
             return result;

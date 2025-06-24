@@ -10,13 +10,13 @@ namespace Nonuso.Messages.Api
 
     }
 
-    public class  UserChangePasswordParamModel 
+    public class UserChangePasswordParamModel
     {
         public required string OldPassword { get; set; }
         public required string NewPassword { get; set; }
     }
 
-    public class  UserSignInParamModel
+    public class UserSignInParamModel
     {
         public required string Email { get; set; }
         public required string Password { get; set; }
@@ -40,6 +40,9 @@ namespace Nonuso.Messages.Api
     {
         public required string UserName { get; set; }
         public IEnumerable<ReviewResultModel> Reviews { get; set; } = [];
+        public required string JoinedMonth { get; set; }
+        public required string JoinedYear { get; set; }
+        public int ProductCount { get; set; } = 0;
         public double ReviewAverage => Reviews.Any() ? Reviews.Average(x => x.Stars) : 0;
     }
 }

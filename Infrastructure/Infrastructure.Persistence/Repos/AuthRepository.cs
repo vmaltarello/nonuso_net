@@ -13,7 +13,17 @@ namespace Nonuso.Infrastructure.Persistence.Repos
         {
             var reviews = await _context.Review.Where(x => x.ReviewedUserId == id).ToListAsync();
 
-            return new UserProfileModel() { Reviews = reviews };
+            var joinedAt = await _context.Users.Where(x => x.Id == id).Select(x => x.CreatedAt).FirstOrDefaultAsync();
+
+            var totalProducts = await _context.Product.Where(x => x.UserId == id).CountAsync();
+
+            return new UserProfileModel() 
+            { 
+                Reviews = reviews, 
+                JoinedMonth = joinedAt.Month.ToString(), 
+                JoinedYear = joinedAt.Year.ToString(),
+                ProductCount = totalProducts 
+            };
         }
 
         public async Task<RefreshToken?> GetRefreshTokenByUserIdAsync(Guid id, string? refreshToken = null)
