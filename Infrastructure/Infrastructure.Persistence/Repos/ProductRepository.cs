@@ -13,7 +13,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
 
         public async Task<ProductDetailModel?> GetByIdAsync(Guid id, Guid userId)
         {
-            var entity = await _context.Product.Include(x => x.User).FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await _context.Product.Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Id == id && x.IsEnabled);
 
             if (entity == null) return null;
 
@@ -56,8 +57,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                         .Count(x => x.ProductId == x.Id && (userId == null || x.UserId != userId))
                 })
                 .OrderByDescending(x => x.FavoriteCount)
-                .ThenByDescending(x => x.Product.UpdatedAt)
                 .ThenByDescending(x => x.Product.CreatedAt)
+                .ThenByDescending(x => x.Product.UpdatedAt)
                 .Take(5)
                 .Select(x => x.Product)
                 .ToListAsync();           
@@ -68,8 +69,8 @@ namespace Nonuso.Infrastructure.Persistence.Repos
             return await _context.Product
                 .Where(x => x.UserId == userId && x.IsEnabled)
                 .Include(x => x.User)
-                .OrderByDescending(x => x.UpdatedAt)
-                .ThenByDescending(x => x.CreatedAt)
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.UpdatedAt)
                 .Take(5)
                 .Select(x => x)
                 .ToListAsync();
