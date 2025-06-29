@@ -28,6 +28,8 @@ namespace Nonuso.Application.Services
         {
             var entity = _mapper.Map<Review>(model);
 
+            if (string.IsNullOrWhiteSpace(entity.Content)) entity.Content = null;
+
             _validatorFactory.GetValidator<Review>().ValidateAndThrow(entity);
 
             await _reviewRepository.CreateAsync(entity);
