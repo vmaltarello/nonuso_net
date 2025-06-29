@@ -55,7 +55,7 @@ namespace Nonuso.Application.Services
             return _mapper.Map<ProductResultModel[]>(result);
         }
 
-        public async Task CreateAsync(ProductParamModel model)
+        public async Task<ProductDetailResultModel> CreateAsync(ProductParamModel model)
         {
             var entity = model.To<Product>();
             entity.Title = char.ToUpper(entity.Title[0]) + entity.Title[1..];
@@ -80,9 +80,11 @@ namespace Nonuso.Application.Services
 
                 await _productRepository.UpdateAsync(entity);
             }
+
+            return await GetByIdAsync(entity.Id, entity.UserId);
         }
 
-        public async Task UpdateAsync(EditProductParamModel model)
+        public async Task<ProductDetailResultModel> UpdateAsync(EditProductParamModel model)
         {
             var entity = await _productRepository.GetByIdAsync(model.Id, model.UserId)
                 ?? throw new EntityNotFoundException(nameof(ProductDetailModel), model.Id);
@@ -109,6 +111,8 @@ namespace Nonuso.Application.Services
             }
 
             await _productRepository.UpdateAsync(entity);
+
+            return await GetByIdAsync(entity.Id, entity.UserId);
         }
 
         public async Task DeleteAsync(Guid id, Guid userId) 

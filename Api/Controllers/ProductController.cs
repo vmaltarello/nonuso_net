@@ -49,8 +49,7 @@ namespace Nonuso.Api.Controllers
         {
             model.UserId = _currentUser.Id;
 
-            await _productService.CreateAsync(model);
-            return Ok();
+            return Ok(await _productService.CreateAsync(model));
         }
 
         [Authorize]
@@ -59,8 +58,7 @@ namespace Nonuso.Api.Controllers
         {           
             model.UserId = _currentUser.Id;
 
-            await _productService.UpdateAsync(model);
-            return Ok();
+            return Ok(await _productService.UpdateAsync(model));
         }
 
         [Authorize]
