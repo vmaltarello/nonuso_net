@@ -35,6 +35,7 @@ namespace Nonuso.Messages.Api
         public int UnReadedCount { get; set; } = 0;
         public required ProductRequestModel ProductRequest { get; set; }
         public bool HasReview { get; set; }
+        public bool Blocked { get; set; }
         public required UserModel ChatWithUser { get; set; }
         public DateTime CreatedAt { get; set; }
     }
