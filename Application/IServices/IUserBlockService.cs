@@ -4,7 +4,8 @@ namespace Nonuso.Application.IServices
 {
     public interface IUserBlockService
     {
-        Task Block(UserBlockParamModel model);
-        Task UnBlock(Guid id);
+        Task BlockAsync(UserBlockParamModel model);
+        Task UnBlockAsync(Guid id);
+        Task<CheckUserBlockResultModel> CheckBlockAsync(CheckUserBlockParamModel model);
     }
 }

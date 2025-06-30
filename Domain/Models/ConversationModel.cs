@@ -11,7 +11,6 @@ namespace Nonuso.Domain.Models
         public int UnReadedCount { get; set; } = 0;
         public required ProductRequest ProductRequest { get; set; }
         public bool HasReview {  get; set; }
-        public bool Blocked { get; set; }
         public required User ChatWithUser { get; set; }
         public DateTime CreatedAt { get; set; }        
     }

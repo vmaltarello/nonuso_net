@@ -7,6 +7,24 @@ namespace Nonuso.Messages.Api
         public Guid Id { get; set; }
     }
 
+    public class CheckUserBlockParamModel
+    {
+        public Guid CurrentUserId { get; set; }
+
+        public required Guid OtherUserId { get; set; }
+
+        public Guid? ConversationId { get; set; }
+    }
+
+    public class CheckUserBlockResultModel
+    {
+        public bool CurrentUserIsBlocked { get; set; }
+
+        public bool OtherUserIsBlocked { get; set; }
+
+        public Guid? ConversationId { get; set; }
+    }
+
     public class UserBlockParamModel
     {
         public Guid BlockerId { get; set; }

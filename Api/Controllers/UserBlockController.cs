@@ -15,19 +15,28 @@ namespace Nonuso.Api.Controllers
         private readonly IUserBlockService _userBlockService = userBlockService;
         private readonly CurrentUser _currentUser = currentUser;
 
+        [HttpGet]
+        public async Task<IActionResult> CheckBlock(CheckUserBlockParamModel model) 
+        {
+            model.CurrentUserId = _currentUser.Id;
+
+            return Ok(await _userBlockService.CheckBlockAsync(model));
+
+        }
+
         [HttpPost]
         public async Task<IActionResult> Block(UserBlockParamModel model)
         {
             model.BlockerId = _currentUser.Id;
 
-            await _userBlockService.Block(model);
+            await _userBlockService.BlockAsync(model);
             return Ok();
         }
 
         [HttpPost("{id}")]
         public async Task<IActionResult> UnBlock(Guid id)
         {
-            await _userBlockService.UnBlock(id);
+            await _userBlockService.UnBlockAsync(id);
             return Ok();
         }
     }

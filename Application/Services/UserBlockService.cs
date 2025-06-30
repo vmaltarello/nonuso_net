@@ -18,7 +18,7 @@ namespace Nonuso.Application.Services
         readonly IDomainValidatorFactory _validatorFactory = validatorFactory;
         readonly IUserBlockRepository _userBlockRepository = userBlockRepository;
 
-        public async Task Block(UserBlockParamModel model)
+        public async Task BlockAsync(UserBlockParamModel model)
         {
             var entity = _mapper.Map<UserBlock>(model);
 
@@ -27,7 +27,21 @@ namespace Nonuso.Application.Services
             await _userBlockRepository.CreateAsync(entity);
         }
 
-        public async Task UnBlock(Guid id)
+        public async Task<CheckUserBlockResultModel> CheckBlockAsync(CheckUserBlockParamModel model)
+        {
+            var result = await _userBlockRepository.CheckBlockAsync(model.CurrentUserId, model.OtherUserId, model.ConversationId);
+
+            if (result == null) return new CheckUserBlockResultModel();
+
+            return new CheckUserBlockResultModel() 
+            {
+                CurrentUserIsBlocked = result.BlockerId == model.OtherUserId && result.BlockedId == model.CurrentUserId,
+                OtherUserIsBlocked = result.BlockerId == model.CurrentUserId && result.BlockedId == model.OtherUserId,
+                ConversationId = result.ConversationId,
+            };
+        }
+
+        public async Task UnBlockAsync(Guid id)
         {
             var entity = await _userBlockRepository.GetByIdAsync(id)
                 ?? throw new EntityNotFoundException(nameof(UserBlock), id);

@@ -42,7 +42,6 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     }),
                     ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!,
                     HasReview = _context.Review.Where(y => y.ProductRequestId == x.ProductRequestId).Any(),
-                    Blocked = _context.UserBlock.Where(y => y.ConversationId == x.Id && y.BlockerId == userId).Any()
                 })
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
@@ -85,7 +84,6 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                    }),
                    ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!,
                    HasReview = _context.Review.Where(y => y.ProductRequestId == x.ProductRequestId).Any(),
-                   Blocked = _context.UserBlock.Where(y => y.ConversationId == x.Id && y.BlockerId == userId).Any()
                })
                .FirstOrDefaultAsync();
         }
@@ -116,7 +114,6 @@ namespace Nonuso.Infrastructure.Persistence.Repos
                     }),
                     ChatWithUser = x.ProductRequest!.RequestedId == userId ? x.ProductRequest.RequesterUser! : x.ProductRequest.RequestedUser!,
                     HasReview = _context.Review.Where(y => y.ProductRequestId == x.ProductRequestId).Any(),
-                    Blocked = _context.UserBlock.Where(y => y.ConversationId == x.Id && y.BlockerId == userId).Any()
                 })                
                 .ToListAsync();       
         }
