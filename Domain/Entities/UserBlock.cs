@@ -28,7 +28,6 @@ namespace Nonuso.Domain.Entities
 
         public Guid? ConversationId { get; set; }
 
-        [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("BlockerId")]
