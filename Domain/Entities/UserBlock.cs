@@ -10,7 +10,7 @@ namespace Nonuso.Domain.Entities
         PromotionalMessage,
         DiscriminatoryMessage, 
         SexualHarassment, 
-        AccountCompromisedOrDataTheft, 
+        AccountCompromisedOrDataTheft,
         Other
     }
    
@@ -22,7 +22,7 @@ namespace Nonuso.Domain.Entities
         [Required]
         public required Guid BlockedId { get; set; }
 
-        public required UserBlockReason Reason { get; set; }
+        public required UserBlockReason Reason { get; set; } = UserBlockReason.Other;
 
         public string? AdditionalInfo { get; set; }
 

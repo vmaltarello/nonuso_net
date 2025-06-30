@@ -35,6 +35,7 @@ namespace Nonuso.Application.Services
 
             return new CheckUserBlockResultModel() 
             {
+                Id = result.Id,
                 CurrentUserIsBlocked = result.BlockerId == model.OtherUserId && result.BlockedId == model.CurrentUserId,
                 OtherUserIsBlocked = result.BlockerId == model.CurrentUserId && result.BlockedId == model.OtherUserId,
                 ConversationId = result.ConversationId,

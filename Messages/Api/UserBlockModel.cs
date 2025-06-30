@@ -18,6 +18,7 @@ namespace Nonuso.Messages.Api
 
     public class CheckUserBlockResultModel
     {
+        public Guid Id { get; set; }
         public bool CurrentUserIsBlocked { get; set; }
 
         public bool OtherUserIsBlocked { get; set; }
