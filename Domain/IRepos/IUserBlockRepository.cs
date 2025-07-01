@@ -7,6 +7,6 @@ namespace Nonuso.Domain.IRepos
         Task<UserBlock?> GetByIdAsync(Guid id);
         Task CreateAsync(UserBlock entity);
         Task DeleteAsync(UserBlock entity);
-        Task<UserBlock?> CheckBlockAsync(Guid currentUserId, Guid otherUserId, Guid? conversationId = null);
+        Task<IEnumerable<UserBlock>> CheckBlockAsync(Guid currentUserId, Guid otherUserId, Guid? conversationId = null);
     }
 }

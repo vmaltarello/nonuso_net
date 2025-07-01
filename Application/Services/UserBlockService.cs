@@ -31,14 +31,14 @@ namespace Nonuso.Application.Services
         {
             var result = await _userBlockRepository.CheckBlockAsync(model.CurrentUserId, model.OtherUserId, model.ConversationId);
 
-            if (result == null) return new CheckUserBlockResultModel();
+            if (!result.Any()) return new CheckUserBlockResultModel();
 
             return new CheckUserBlockResultModel() 
             {
-                Id = result.Id,
-                CurrentUserIsBlocked = result.BlockerId == model.OtherUserId && result.BlockedId == model.CurrentUserId,
-                OtherUserIsBlocked = result.BlockerId == model.CurrentUserId && result.BlockedId == model.OtherUserId,
-                ConversationId = result.ConversationId,
+                Id = result.Where(x => x.BlockerId == model.CurrentUserId).First().Id,
+                CurrentUserIsBlocked = result.Where(x => x.BlockerId == model.OtherUserId && x.BlockedId == model.CurrentUserId).Any(),
+                OtherUserIsBlocked = result.Where(x => x.BlockerId == model.CurrentUserId && x.BlockedId == model.OtherUserId).Any(),
+                ConversationId = result.Where(x => x.BlockerId == model.CurrentUserId).First().ConversationId,
             };
         }
 

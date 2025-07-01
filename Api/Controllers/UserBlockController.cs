@@ -21,7 +21,6 @@ namespace Nonuso.Api.Controllers
             model.CurrentUserId = _currentUser.Id;
 
             return Ok(await _userBlockService.CheckBlockAsync(model));
-
         }
 
         [HttpPost]

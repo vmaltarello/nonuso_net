@@ -11,6 +11,7 @@ namespace Nonuso.Domain.Entities
         DiscriminatoryMessage, 
         SexualHarassment, 
         AccountCompromisedOrDataTheft,
+        BlockChat,
         Other
     }
    
@@ -22,7 +23,7 @@ namespace Nonuso.Domain.Entities
         [Required]
         public required Guid BlockedId { get; set; }
 
-        public required UserBlockReason Reason { get; set; } = UserBlockReason.Other;
+        public UserBlockReason Reason { get; set; } = UserBlockReason.BlockChat;
 
         public string? AdditionalInfo { get; set; }
 

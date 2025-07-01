@@ -25,13 +25,13 @@ namespace Nonuso.Infrastructure.Persistence.Repos
             await _context.SaveChangesAsync();
         }
 
-        public async Task<UserBlock?> CheckBlockAsync(Guid currentUserId, Guid otherUserId, Guid? conversationId = null)
+        public async Task<IEnumerable<UserBlock>> CheckBlockAsync(Guid currentUserId, Guid otherUserId, Guid? conversationId = null)
         {
             var query = _context.UserBlock.Where(x => (x.BlockerId == currentUserId || x.BlockerId == otherUserId || x.BlockedId == currentUserId || x.BlockedId == otherUserId));
 
             if(conversationId != null) query = query.Where(x => x.ConversationId == conversationId);
 
-            return await query.FirstOrDefaultAsync();
+            return await query.ToListAsync();
         }
     }
 }

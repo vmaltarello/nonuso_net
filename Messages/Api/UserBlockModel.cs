@@ -32,10 +32,6 @@ namespace Nonuso.Messages.Api
 
         public required Guid BlockedId { get; set; }
 
-        public required int Reason { get; set; }
-
-        public string? AdditionalInfo { get; set; }
-
         public Guid? ConversationId { get; set; }
     }
 }
