@@ -41,6 +41,7 @@ namespace Nonuso.Application
 
             CreateMap<ReviewParamModel, Review>();
             CreateMap<ReviewResultModel, Review>().ReverseMap();
+            CreateMap<UserBlockParamModel, UserBlock>().ReverseMap();
         }
     }
 }
