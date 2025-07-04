@@ -22,6 +22,13 @@ namespace Nonuso.Api.Controllers
         }
 
         [Authorize]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserProfileById(Guid id)
+        {
+            return Ok(await _authService.GetUserProfileAsync(id));
+        }
+
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetUserProfile()
         {

@@ -13,7 +13,7 @@ namespace Nonuso.Infrastructure.Redis.Repos
         {
             var userPresence = await _dbRedis.HashGetAllAsync(key: userId.ToString());
 
-                return userPresence?.Length > 0 ? (true, userPresence[1].ToString())
+                return userPresence?.Length > 0 ? (true, userPresence[0].ToString())
                     : null;         
         }
 

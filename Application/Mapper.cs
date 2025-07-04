@@ -33,7 +33,7 @@ namespace Nonuso.Application
             CreateMap<Domain.Models.ConversationModel, ConversationResultModel>();
             CreateMap<Conversation, ConversationResultModel>();
             CreateMap<User, UserModel>().ReverseMap();
-            CreateMap<ProductRequest, Messages.Api.ProductRequestModel>();
+            CreateMap<ProductRequest, ProductRequestModel>();
             CreateMap<ChatModel, ChatResultModel>();
             CreateMap<MessageModel, ChatResultModel>();
             CreateMap<MessageModel, MessageResultModel>();
@@ -41,7 +41,7 @@ namespace Nonuso.Application
 
             CreateMap<ReviewParamModel, Review>();
             CreateMap<ReviewResultModel, Review>().ReverseMap();
-            CreateMap<UserBlockParamModel, UserBlock>().ReverseMap();
+            CreateMap<UserBlockParamModel, UserBlock>();
         }
     }
 }

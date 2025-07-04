@@ -87,14 +87,14 @@ namespace Nonuso.Infrastructure.Notification.Services
 
         public async Task SendPushNotificationAsync(PusNotificationParamModel model)
         {
-            var presence = await _presenceRepository.GetUserPresenceAsync(model.UserId);
-
-            var conversation = await _conversationRepository.GetEntityByIdAsync(model.ConversationId, model.UserId)
-                  ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
+            var presence = await _presenceRepository.GetUserPresenceAsync(model.UserId);       
 
             // is offline --> send push notification
             if (!presence.HasValue || !presence.Value.currentPage.Contains(model.ConversationId.ToString()))
             {
+                var conversation = await _conversationRepository.GetEntityByIdAsync(model.ConversationId, model.UserId)
+                    ?? throw new EntityNotFoundException(nameof(Conversation), model.ConversationId);
+
                 foreach (var info in conversation.ConversationsInfo)
                 {
                     info.UnreadCount += 1;

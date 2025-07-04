@@ -33,11 +33,12 @@ namespace Nonuso.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new RoleConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
 
+            modelBuilder.Entity<Review>()
+            .HasIndex(r => new { r.ReviewerUserId, r.ReviewedUserId, r.ProductRequestId })
+            .IsUnique();
+
             modelBuilder.Entity<Product>(entity =>
             {
-                entity.HasIndex(x => x.UserId);
-                entity.HasIndex(x => x.CategoryId);
-
                 entity.HasGeneratedTsVectorColumn(
                     p => p.SearchVector,
                     "simple",
