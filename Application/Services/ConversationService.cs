@@ -26,7 +26,7 @@ namespace Nonuso.Application.Services
         {
             var result = await _conversationRepository.GetAllAsync(userId);
 
-            return _mapper.Map<ConversationResultModel[]>(result);
+            return _mapper.Map<ConversationResultModel[]>(result.OrderByDescending(x => x.LastMessageDate));
         }
 
         public async Task<ConversationResultModel?> GetActiveAsync(Guid productId, Guid userId)
