@@ -9,7 +9,6 @@ using Microsoft.IdentityModel.Tokens;
 using Nonuso.Application.IServices;
 using Nonuso.Common;
 using Nonuso.Domain.Entities;
-using Nonuso.Domain.Entities.Base;
 using Nonuso.Domain.Exceptions;
 using Nonuso.Domain.IRepos;
 using Nonuso.Domain.Validators.Factory;
@@ -60,7 +59,7 @@ namespace Nonuso.Infrastructure.Auth.Services
 
             var profileInfo = await _authRepository.GetUserProfileAsync(user.Id);
 
-            var result = new UserProfileResultModel() 
+            var result = new UserProfileResultModel()
             {
                 UserName = user.UserName!,
                 Reviews = _mapper.Map<ReviewResultModel[]>(profileInfo.Reviews),
@@ -86,7 +85,7 @@ namespace Nonuso.Infrastructure.Auth.Services
                 var subEmailPart = email.Split('@')[0];
                 user = new User
                 {
-                    UserName = subEmailPart[..Math.Min(20, subEmailPart.Length)],
+                    UserName = subEmailPart[..Math.Min(20, subEmailPart.Length)].ToLower(),
                     Email = email,
                     EmailConfirmed = true,
                     LastSignInAt = DateTime.UtcNow
@@ -116,6 +115,7 @@ namespace Nonuso.Infrastructure.Auth.Services
         public async Task SignUpAsync(UserSignUpParamModel model)
         {
             var entity = model.To<User>();
+            entity.UserName = entity.UserName?.ToLower().Trim();
 
             _validatorFactory.GetValidator<User>().ValidateAndThrow(entity);
 
@@ -180,12 +180,12 @@ namespace Nonuso.Infrastructure.Auth.Services
             await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
         }
 
-        public async Task ChangeUserNameAsync(Guid userId, string userName)
+        public async Task ChangeUserNameAsync(UserChangeUserNameParamModel model)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString())
-                ?? throw new EntityNotFoundException(nameof(User), userId);
+            var user = await _userManager.FindByIdAsync(model.UserId.ToString())
+                ?? throw new EntityNotFoundException(nameof(User), model.UserId);
 
-            user.UserName = userName;
+            user.UserName = model.UserName.ToLower().Trim();
 
             await _userManager.UpdateAsync(user);
         }
@@ -223,7 +223,7 @@ namespace Nonuso.Infrastructure.Auth.Services
             var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
             var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.Password);
 
-            if(result.Succeeded) return await BuildTokens(user);
+            if (result.Succeeded) return await BuildTokens(user);
 
             return null;
         }

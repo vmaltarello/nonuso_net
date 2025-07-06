@@ -22,6 +22,12 @@ namespace Nonuso.Messages.Api
         public required string Password { get; set; }
     }
 
+    public class UserChangeUserNameParamModel
+    {
+        public required string UserName { get; set; }
+        public Guid UserId { get; set; }
+    }
+
     public class UserSignUpParamModel
     {
         public required string Email { get; set; }

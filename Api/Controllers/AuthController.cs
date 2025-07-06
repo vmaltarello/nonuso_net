@@ -102,5 +102,14 @@ namespace Nonuso.Api.Controllers
         {
             return Ok(await _authService.ResetPasswordAsync(model));
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ChangeUserName(UserChangeUserNameParamModel model)
+        {
+            model.UserId = _currentUser.Id;
+            await _authService.ChangeUserNameAsync(model);
+            return Ok();
+        }
     }
 }
