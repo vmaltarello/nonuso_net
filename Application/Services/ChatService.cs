@@ -11,13 +11,19 @@ namespace Nonuso.Application.Services
     internal class ChatService(
         IMapper mapper,
         IChatRepository chatRepository,
-        INotificationService notificationService,
         IConversationRepository conversationRepository) : IChatService
     {
         readonly IMapper _mapper = mapper;
         readonly IChatRepository _chatRepository = chatRepository;
         readonly IConversationRepository _conversationRepository = conversationRepository;
-        readonly INotificationService _notificationService = notificationService;
+
+        public async Task<UserModel> GetChatWithUserByConversationIdAsync(Guid id, Guid userId)
+        {
+            var user = await _chatRepository.GetChatWithUserByConversationIdAsync(id, userId)
+                ?? throw new EntityNotFoundException(nameof(User), userId);
+
+            return _mapper.Map<UserModel>(user);
+        }
 
         public async Task SetAllReaded(Guid conversationId, Guid userId)
         {
@@ -39,19 +45,6 @@ namespace Nonuso.Application.Services
             await _chatRepository.CreateAsync(entity);
 
             var result = await _chatRepository.GetMessageById(entity.Id);
-
-            var otherUser = await _chatRepository.GetChatWithUserByConversationIdAsync(model.ConversationId, model.SenderId);
-
-            if (otherUser != null)
-            {
-                await _notificationService.SendPushNotificationAsync(new PusNotificationParamModel()
-                {
-                    UserId = otherUser.Id,
-                    Content = model.Content,
-                    UserName = otherUser.UserName!,
-                    ConversationId = model.ConversationId
-                });
-            }
 
             return _mapper.Map<MessageResultModel>(result);
         }

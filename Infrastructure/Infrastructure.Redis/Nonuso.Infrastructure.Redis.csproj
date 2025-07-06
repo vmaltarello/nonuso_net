@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Application\Nonuso.Application.csproj" />
     <ProjectReference Include="..\..\Domain\Nonuso.Domain.csproj" />
     <ProjectReference Include="..\..\Messages\Nonuso.Messages.csproj" />
     <ProjectReference Include="..\Infrastructure.Secret\Nonuso.Infrastructure.Secret.csproj" />

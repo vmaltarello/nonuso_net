@@ -7,14 +7,14 @@ namespace Nonuso.Infrastructure.Redis.Repos
     internal class PresenceRepository(IConnectionMultiplexer redis, ILogger<PresenceRepository> logger) : IPresenceRepository
     {
         private readonly IDatabase _dbRedis = redis.GetDatabase();
-        private readonly ILogger<PresenceRepository> _logger = logger; 
+        private readonly ILogger<PresenceRepository> _logger = logger;
 
         public async Task<(bool isOnline, string currentPage)?> GetUserPresenceAsync(Guid userId)
         {
             var userPresence = await _dbRedis.HashGetAllAsync(key: userId.ToString());
 
-                return userPresence?.Length > 0 ? (true, userPresence[0].ToString())
-                    : null;         
+            return userPresence?.Length > 0 ? (true, userPresence[0].ToString())
+                : null;
         }
 
         public async Task SetUserOfflineAsync(Guid userId)

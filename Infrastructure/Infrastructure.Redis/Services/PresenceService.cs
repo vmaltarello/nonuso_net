@@ -2,7 +2,7 @@
 using Nonuso.Domain.IRepos;
 using System.Text.RegularExpressions;
 
-namespace Nonuso.Application.Services
+namespace Nonuso.Infrastructure.Redis.Services
 {
     internal class PresenceService(IPresenceRepository presenceRepository,
         IProductRepository productRepository) : IPresenceService
@@ -13,6 +13,11 @@ namespace Nonuso.Application.Services
         private static readonly Regex ProductDetailPattern =
         new Regex(@"^/product-list/product-detail/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
                   RegexOptions.Compiled);
+
+        public async Task<(bool isOnline, string currentPage)?> GetUserPresenceAsync(Guid userId)
+        {
+            return await _presenceRepository.GetUserPresenceAsync(userId);
+        }
 
         public async Task SetUserOfflineAsync(Guid userId)
         {
@@ -45,7 +50,7 @@ namespace Nonuso.Application.Services
         {
             var entity = await _productRepository.GetByIdAsync(productId);
 
-            if(entity == null || entity.UserId == userId) return;
+            if (entity == null || entity.UserId == userId) return;
 
             entity.ViewCount += 1;
 
